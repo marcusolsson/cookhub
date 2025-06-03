@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine AS builder
+FROM golang:1.23-bookworm AS builder
 
 WORKDIR /app
 
@@ -7,7 +7,7 @@ RUN go mod download && go mod verify
 
 COPY . .
 
-RUN CGO_ENABLED=1 GOOS=linux go build -o server .
+RUN go build -o server .
 
 FROM alpine:latest
 
