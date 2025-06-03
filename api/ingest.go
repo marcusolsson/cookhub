@@ -53,7 +53,7 @@ func (s *APIServer) indexRepo(w http.ResponseWriter, req *http.Request) {
 		slug     = fmt.Sprintf("%s/%s", org, repoName)
 	)
 
-	tempDir, err := os.MkdirTemp("staging", "cooklang-")
+	tempDir, err := os.MkdirTemp("", "cooklang-")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
