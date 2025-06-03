@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -14,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/mattn/go-sqlite3"
 )
 
 func (s *APIServer) getIngestedFiles(w http.ResponseWriter, req *http.Request) {
@@ -79,15 +77,8 @@ func (s *APIServer) indexRepo(w http.ResponseWriter, req *http.Request) {
 
 	jobID, err := s.Store.CreateJob(ctx, slug, sha)
 	if err != nil {
-		var sqlite3Err sqlite3.Error
-
-		if errors.As(err, &sqlite3Err) && sqlite3Err.Code == sqlite3.ErrConstraint {
-			fmt.Println("Already ingested")
-			return
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	reader, err := zip.OpenReader(zipPath)
