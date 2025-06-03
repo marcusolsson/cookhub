@@ -1,0 +1,109 @@
+package recipe
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/aquilax/cooklang-go"
+)
+
+type SchemaOrgRecipe struct {
+	Context            string               `json:"@context"`
+	Type               string               `json:"@type"`
+	Name               string               `json:"name,omitempty"`
+	RecipeCategory     string               `json:"recipeCategory,omitempty"`
+	RecipeIngredient   []string             `json:"recipeIngredient,omitempty"`
+	RecipeInstructions []SchemaOrgHowToStep `json:"recipeInstructions,omitempty"`
+	RecipeYield        string               `json:"recipeYield,omitempty"`
+	PrepTime           string               `json:"prepTime,omitempty"`
+	CookTime           string               `json:"cookTime,omitempty"`
+	TotalTime          string               `json:"totalTime,omitempty"`
+}
+
+type SchemaOrgHowToStep struct {
+	Type  string `json:"@type"`
+	Text  string `json:"text,omitempty"`
+	Image string `json:"image,omitempty"`
+}
+
+func ParseCooklangRecipe(name, content string) (*cooklang.RecipeV2, error) {
+	parser := cooklang.NewParserV2(&cooklang.ParseV2Config{})
+
+	return parser.ParseString(content)
+}
+
+func ConvertCooklangToSchemaOrg(name string, recipe *cooklang.RecipeV2) SchemaOrgRecipe {
+	return SchemaOrgRecipe{
+		Context:            "https://schema.org",
+		Type:               "Recipe",
+		Name:               name,
+		RecipeCategory:     getCategory(recipe),
+		RecipeIngredient:   getIngredients(recipe),
+		RecipeInstructions: getInstructions(recipe),
+		RecipeYield:        getRecipeYield(recipe),
+	}
+}
+
+func getCategory(recipe *cooklang.RecipeV2) string {
+	if category, ok := recipe.Metadata["course"].(string); ok {
+		return category
+	}
+	return ""
+}
+
+func getRecipeYield(recipe *cooklang.RecipeV2) string {
+	if servings, ok := recipe.Metadata["servings"].(string); ok {
+		return servings
+	}
+	return ""
+}
+
+func getIngredients(recipe *cooklang.RecipeV2) []string {
+	var res []string
+
+	for _, section := range recipe.Steps {
+		for _, step := range section {
+			switch val := step.(type) {
+			case cooklang.IngredientV2:
+				switch {
+				case val.Units == "" && val.Quantity == 0:
+					res = append(res, val.Name)
+				case val.Units == "":
+					res = append(res, fmt.Sprintf("%v %s", val.Quantity, val.Name))
+				default:
+					res = append(res, fmt.Sprintf("%v %s %s", val.Quantity, val.Units, val.Name))
+				}
+			}
+		}
+	}
+	return res
+}
+
+func getInstructions(recipe *cooklang.RecipeV2) []SchemaOrgHowToStep {
+	var res []SchemaOrgHowToStep
+	var stepBuilder strings.Builder
+
+	for _, step := range recipe.Steps {
+		for _, component := range step {
+			switch val := component.(type) {
+			case cooklang.TextV2:
+				stepBuilder.WriteString(val.Value)
+				if strings.HasSuffix(val.Value, ".") {
+					res = append(res, SchemaOrgHowToStep{
+						Type: "HowToStep",
+						Text: stepBuilder.String(),
+					})
+					stepBuilder.Reset()
+				}
+			case cooklang.IngredientV2:
+				stepBuilder.WriteString(val.Name)
+			case cooklang.CookwareV2:
+				stepBuilder.WriteString(val.Name)
+			case cooklang.TimerV2:
+				stepBuilder.WriteString(fmt.Sprintf("%v %s", val.Quantity, val.Unit))
+			}
+		}
+	}
+
+	return res
+}
