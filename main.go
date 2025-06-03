@@ -3,7 +3,6 @@ package main
 import (
 	"cmp"
 	"context"
-	"database/sql"
 	"log/slog"
 	"net/http"
 	"os"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/marcusolsson/cookhub/api"
 	dbpkg "github.com/marcusolsson/cookhub/db"
 	"github.com/marcusolsson/cookhub/ui"
@@ -20,32 +20,39 @@ import (
 )
 
 func main() {
-	port := cmp.Or(os.Getenv("PORT"), "8080")
+	var (
+		port = cmp.Or(os.Getenv("PORT"), "8080")
+		dsn  = os.Getenv("DATABASE_URL")
+	)
+
+	ctx := context.Background()
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	db, err := sql.Open("sqlite3", "./example.db")
+	logger.Info("Attempting to connect to database...")
+
+	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		logger.Error("Failed to connect to the database", "error", err)
 		os.Exit(1)
 	}
-	defer db.Close()
+	defer pool.Close()
 
-	if err := db.Ping(); err != nil {
+	if err := pool.Ping(ctx); err != nil {
 		logger.Error("Failed to ping the database", "error", err)
 		os.Exit(1)
 	}
 
 	logger.Info("Successfully connected to the database")
 
-	store := dbpkg.NewStore(db)
+	store := dbpkg.NewStore(pool)
 
-	if err := store.CreateJobsTable(); err != nil {
+	if err := store.CreateJobsTable(ctx); err != nil {
 		logger.Error("Failed to create jobs table", "error", err)
 		os.Exit(1)
 	}
 
-	if err := store.CreateFilesTable(); err != nil {
+	if err := store.CreateFilesTable(ctx); err != nil {
 		logger.Error("Failed to create files table", "error", err)
 		os.Exit(1)
 	}
