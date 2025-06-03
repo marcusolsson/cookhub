@@ -7,7 +7,7 @@ RUN go mod download && go mod verify
 
 COPY . .
 
-RUN go build -o server .
+RUN CGO_ENABLED=1 GOOS=linux go build -o server .
 
 FROM alpine:latest
 
