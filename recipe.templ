@@ -1,10 +1,6 @@
-package ui
+package main
 
-import (
-	"github.com/marcusolsson/cookhub/pkg/recipe"
-)
-
-templ recipeView(recipe recipe.SchemaOrgRecipe) {
+templ recipeView(recipe SchemaOrgRecipe) {
 	<html>
 		<body>
 			<main class={ mainContainer() }>

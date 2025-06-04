@@ -10,19 +10,15 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/marcusolsson/cookhub/api"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
-	"github.com/marcusolsson/cookhub/internal/config"
-	"github.com/marcusolsson/cookhub/internal/logger"
-	"github.com/marcusolsson/cookhub/ui"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
 	var (
-		cfg    = config.Load()
-		logger = logger.New(cfg)
+		cfg    = Load()
+		logger = New(cfg)
 		ctx    = context.Background()
 	)
 
@@ -44,8 +40,8 @@ func main() {
 
 	queries := db.New(pool)
 
-	apisrv := api.NewRouter(queries)
-	uisrv := ui.NewRouter(queries)
+	apisrv := NewRouter(queries)
+	uisrv := newServer(queries)
 
 	r := chi.NewRouter()
 	r.Mount("/api", apisrv)

@@ -1,14 +1,13 @@
-package logger
+package main
 
 import (
 	"log/slog"
 	"os"
 
 	"github.com/lmittmann/tint"
-	"github.com/marcusolsson/cookhub/internal/config"
 )
 
-func New(cfg config.Config) *slog.Logger {
+func New(cfg Config) *slog.Logger {
 	if cfg.Env == "development" {
 		return slog.New(tint.NewHandler(os.Stdout, nil))
 	}

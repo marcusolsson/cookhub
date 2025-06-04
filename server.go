@@ -1,4 +1,4 @@
-package ui
+package main
 
 import (
 	"fmt"
@@ -7,14 +7,13 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
-	"github.com/marcusolsson/cookhub/pkg/recipe"
 )
 
 type server struct {
 	db *db.Queries
 }
 
-func NewRouter(qs *db.Queries) chi.Router {
+func newServer(qs *db.Queries) chi.Router {
 	srv := &server{
 		db: qs,
 	}
@@ -52,12 +51,12 @@ func (s *server) getRecipe(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	cooklangRecipe, err := recipe.ParseCooklangRecipe(file.Name, file.Content)
+	cooklangRecipe, err := ParseCooklangRecipe(file.Name, file.Content)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	schemaOrgRecipe := recipe.ConvertCooklangToSchemaOrg(file.Name, cooklangRecipe)
+	schemaOrgRecipe := ConvertCooklangToSchemaOrg(file.Name, cooklangRecipe)
 
 	component := recipeView(schemaOrgRecipe)
 	component.Render(req.Context(), w)
