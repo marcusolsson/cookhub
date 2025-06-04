@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
@@ -18,15 +19,22 @@ func NewRouter(qs *db.Queries) chi.Router {
 		db: qs,
 	}
 	r := chi.NewRouter()
-	r.Get("/github.com/{org}/{name}", srv.getRecipe)
+	r.Get("/github.com/{org}/{repo}/*", srv.getRecipe)
+	r.Get("/jobs", srv.getJobs)
+	r.Get("/recipes", srv.getRecipes)
 	return r
 }
 
 func (s *server) getRecipe(w http.ResponseWriter, req *http.Request) {
 	var (
 		org  = chi.URLParam(req, "org")
-		name = chi.URLParam(req, "name")
-		slug = fmt.Sprintf("%s/%s", org, name)
+		repo = chi.URLParam(req, "repo")
+		slug = fmt.Sprintf("%s/%s", org, repo)
+	)
+
+	relPath := strings.TrimPrefix(
+		req.URL.Path,
+		fmt.Sprintf("/ui/github.com/%s/%s", org, repo),
 	)
 
 	ctx := req.Context()
@@ -36,12 +44,13 @@ func (s *server) getRecipe(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	files, err := s.db.GetFilesByJob(ctx, jobID)
+	file, err := s.db.GetFileByName(ctx, db.GetFileByNameParams{
+		JobID: jobID,
+		Name:  relPath,
+	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
-	file := files[3]
 
 	cooklangRecipe, err := recipe.ParseCooklangRecipe(file.Name, file.Content)
 	if err != nil {
@@ -51,5 +60,29 @@ func (s *server) getRecipe(w http.ResponseWriter, req *http.Request) {
 	schemaOrgRecipe := recipe.ConvertCooklangToSchemaOrg(file.Name, cooklangRecipe)
 
 	component := recipeView(schemaOrgRecipe)
+	component.Render(req.Context(), w)
+}
+
+func (s *server) getJobs(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	jobs, err := s.db.GetJobs(ctx)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	component := jobsView(jobs)
+	component.Render(req.Context(), w)
+}
+
+func (s *server) getRecipes(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	recipes, err := s.db.GetRecipes(ctx)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	component := recipesView(recipes)
 	component.Render(req.Context(), w)
 }

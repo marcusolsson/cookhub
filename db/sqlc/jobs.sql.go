@@ -42,6 +42,33 @@ func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (string, e
 	return id, err
 }
 
+const getFileByName = `-- name: GetFileByName :one
+SELECT
+    created_at,
+    name,
+    content
+FROM files
+WHERE job_id = $1 AND name = $2
+`
+
+type GetFileByNameParams struct {
+	JobID string
+	Name  string
+}
+
+type GetFileByNameRow struct {
+	CreatedAt pgtype.Timestamptz
+	Name      string
+	Content   string
+}
+
+func (q *Queries) GetFileByName(ctx context.Context, arg GetFileByNameParams) (GetFileByNameRow, error) {
+	row := q.db.QueryRow(ctx, getFileByName, arg.JobID, arg.Name)
+	var i GetFileByNameRow
+	err := row.Scan(&i.CreatedAt, &i.Name, &i.Content)
+	return i, err
+}
+
 const getFilesByJob = `-- name: GetFilesByJob :many
 SELECT
     created_at,
@@ -77,6 +104,35 @@ func (q *Queries) GetFilesByJob(ctx context.Context, jobID string) ([]GetFilesBy
 	return items, nil
 }
 
+const getJobs = `-- name: GetJobs :many
+SELECT id, created_at, slug, commit_sha FROM jobs
+`
+
+func (q *Queries) GetJobs(ctx context.Context) ([]Job, error) {
+	rows, err := q.db.Query(ctx, getJobs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Job
+	for rows.Next() {
+		var i Job
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.Slug,
+			&i.CommitSha,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getLatestJobBySlug = `-- name: GetLatestJobBySlug :one
 SELECT id FROM jobs
 WHERE slug = $1
@@ -88,4 +144,49 @@ func (q *Queries) GetLatestJobBySlug(ctx context.Context, slug string) (string, 
 	var id string
 	err := row.Scan(&id)
 	return id, err
+}
+
+const getRecipes = `-- name: GetRecipes :many
+SELECT
+    f.created_at,
+    f.name,
+    f.content,
+    j.slug,
+    j.commit_sha
+FROM files AS f
+INNER JOIN jobs AS j ON f.job_id = j.id
+`
+
+type GetRecipesRow struct {
+	CreatedAt pgtype.Timestamptz
+	Name      string
+	Content   string
+	Slug      string
+	CommitSha string
+}
+
+func (q *Queries) GetRecipes(ctx context.Context) ([]GetRecipesRow, error) {
+	rows, err := q.db.Query(ctx, getRecipes)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetRecipesRow
+	for rows.Next() {
+		var i GetRecipesRow
+		if err := rows.Scan(
+			&i.CreatedAt,
+			&i.Name,
+			&i.Content,
+			&i.Slug,
+			&i.CommitSha,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

@@ -1,0 +1,42 @@
+package ui
+
+import (
+	"time"
+	db "github.com/marcusolsson/cookhub/db/sqlc"
+)
+
+templ jobsView(jobs []db.Job) {
+	<html>
+		<body>
+			<main class={ mainContainer() }>
+				<h1>Jobs</h1>
+				<table style="width: 100%; border-collapse: collapse;">
+					<thead>
+						<tr>
+							<th style="text-align: left">Slug</th>
+							<th style="text-align: left">Commit SHA</th>
+							<th style="text-align: left">Created at</th>
+						</tr>
+					</thead>
+					<tbody>
+						for _, job := range jobs {
+							<tr>
+								<td>
+									<a
+										href={ templ.URL("/ui/github.com/" +
+                                job.Slug) }
+									>{ job.Slug }</a>
+								</td>
+								<td>{ job.CommitSha }</td>
+								<td>
+									{ 
+                                            job.CreatedAt.Time.Format(time.RFC3339) }
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</main>
+		</body>
+	</html>
+}
