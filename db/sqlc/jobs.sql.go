@@ -43,7 +43,12 @@ func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (string, e
 }
 
 const getFilesByJob = `-- name: GetFilesByJob :many
-SELECT created_at, name, content FROM files WHERE job_id = $1
+SELECT
+    created_at,
+    name,
+    content
+FROM files
+WHERE job_id = $1
 `
 
 type GetFilesByJobRow struct {
@@ -73,7 +78,9 @@ func (q *Queries) GetFilesByJob(ctx context.Context, jobID string) ([]GetFilesBy
 }
 
 const getLatestJobBySlug = `-- name: GetLatestJobBySlug :one
-SELECT id FROM jobs WHERE slug = $1 ORDER BY created_at DESC LIMIT 1
+SELECT id FROM jobs
+WHERE slug = $1
+ORDER BY created_at DESC LIMIT 1
 `
 
 func (q *Queries) GetLatestJobBySlug(ctx context.Context, slug string) (string, error) {

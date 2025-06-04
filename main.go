@@ -1,9 +1,7 @@
 package main
 
 import (
-	"cmp"
 	"context"
-	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,6 +12,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/marcusolsson/cookhub/api"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
+	"github.com/marcusolsson/cookhub/internal/config"
+	"github.com/marcusolsson/cookhub/internal/logger"
 	"github.com/marcusolsson/cookhub/ui"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -21,17 +21,14 @@ import (
 
 func main() {
 	var (
-		port = cmp.Or(os.Getenv("PORT"), "8080")
-		dsn  = os.Getenv("DATABASE_URL")
+		cfg    = config.Load()
+		logger = logger.New(cfg)
+		ctx    = context.Background()
 	)
-
-	ctx := context.Background()
-
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	logger.Info("Attempting to connect to database...")
 
-	pool, err := pgxpool.New(ctx, dsn)
+	pool, err := pgxpool.New(ctx, cfg.DB.URL)
 	if err != nil {
 		logger.Error("Failed to connect to the database", "error", err)
 		os.Exit(1)
@@ -55,7 +52,7 @@ func main() {
 	r.Mount("/ui", uisrv)
 
 	srv := http.Server{
-		Addr:    ":" + port,
+		Addr:    ":" + cfg.Port,
 		Handler: r,
 	}
 
