@@ -8,7 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
 
@@ -17,8 +16,8 @@ import (
 
 func main() {
 	var (
-		cfg    = Load()
-		logger = New(cfg)
+		cfg    = loadConfigFromEnv()
+		logger = newLogger(cfg)
 		ctx    = context.Background()
 	)
 
@@ -40,16 +39,11 @@ func main() {
 
 	queries := db.New(pool)
 
-	apisrv := NewRouter(queries)
-	uisrv := newServer(queries)
-
-	r := chi.NewRouter()
-	r.Mount("/api", apisrv)
-	r.Mount("/ui", uisrv)
+	router := newServer(queries)
 
 	srv := http.Server{
 		Addr:    ":" + cfg.Port,
-		Handler: r,
+		Handler: router,
 	}
 
 	go func() {

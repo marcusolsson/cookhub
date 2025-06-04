@@ -12,6 +12,6 @@ type Config struct {
 	}
 }
 
-func Load() Config {
+func loadConfigFromEnv() Config {
 	return env.Must(env.ParseAs[Config]())
 }
