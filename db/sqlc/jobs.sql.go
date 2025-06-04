@@ -11,19 +11,10 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createFile = `-- name: CreateFile :exec
-INSERT INTO files (job_id, name, content) VALUES ($1, $2, $3)
-`
-
 type CreateFileParams struct {
 	JobID   string
 	Name    string
 	Content string
-}
-
-func (q *Queries) CreateFile(ctx context.Context, arg CreateFileParams) error {
-	_, err := q.db.Exec(ctx, createFile, arg.JobID, arg.Name, arg.Content)
-	return err
 }
 
 const createJob = `-- name: CreateJob :one
@@ -105,7 +96,7 @@ func (q *Queries) GetFilesByJob(ctx context.Context, jobID string) ([]GetFilesBy
 }
 
 const getJobs = `-- name: GetJobs :many
-SELECT id, created_at, slug, commit_sha FROM jobs
+SELECT id, created_at, slug, commit_sha, status FROM jobs
 `
 
 func (q *Queries) GetJobs(ctx context.Context) ([]Job, error) {
@@ -122,6 +113,7 @@ func (q *Queries) GetJobs(ctx context.Context) ([]Job, error) {
 			&i.CreatedAt,
 			&i.Slug,
 			&i.CommitSha,
+			&i.Status,
 		); err != nil {
 			return nil, err
 		}
@@ -189,4 +181,18 @@ func (q *Queries) GetRecipes(ctx context.Context) ([]GetRecipesRow, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const setJobStatus = `-- name: SetJobStatus :exec
+UPDATE jobs SET status = $1 WHERE id = $2
+`
+
+type SetJobStatusParams struct {
+	Status StatusEnum
+	ID     string
+}
+
+func (q *Queries) SetJobStatus(ctx context.Context, arg SetJobStatusParams) error {
+	_, err := q.db.Exec(ctx, setJobStatus, arg.Status, arg.ID)
+	return err
 }

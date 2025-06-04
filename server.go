@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"path/filepath"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -13,11 +12,14 @@ import (
 
 type server struct {
 	db *db.Queries
+
+	githubClient *GitHubClient
 }
 
 func newServer(qs *db.Queries) chi.Router {
 	srv := &server{
-		db: qs,
+		db:           qs,
+		githubClient: newGitHubClient(),
 	}
 	r := chi.NewRouter()
 	r.Get("/github.com/{org}/{repo}/*", srv.getRecipe)
@@ -131,20 +133,11 @@ func (s *server) indexRepo(w http.ResponseWriter, req *http.Request) {
 
 	ctx := req.Context()
 
-	zipPath, err := downloadZipBall(ctx, slug)
+	sha, err := s.githubClient.GetLatestCommitSHA(ctx, slug)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	// Extract the commit SHA from the zip filepath.
-	sha := strings.Split(
-		strings.TrimSuffix(
-			filepath.Base(zipPath),
-			filepath.Ext(zipPath),
-		),
-		"-",
-	)[2]
 
 	jobID, err := s.db.CreateJob(ctx, db.CreateJobParams{Slug: slug, CommitSha: sha})
 	if err != nil {
@@ -152,14 +145,37 @@ func (s *server) indexRepo(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	for file := range readFilesFromZip(zipPath) {
-		if err := s.db.CreateFile(ctx, db.CreateFileParams{
-			JobID:   jobID,
-			Name:    file.Name,
-			Content: string(file.Content),
-		}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+	err = func() error {
+		zipPath, err := downloadZipBall(ctx, slug, sha)
+		if err != nil {
+			return err
 		}
+
+		var params []db.CreateFileParams
+		for file := range readFilesFromZip(zipPath) {
+			params = append(params, db.CreateFileParams{
+				JobID:   jobID,
+				Name:    file.Name,
+				Content: string(file.Content),
+			})
+		}
+
+		if _, err := s.db.CreateFile(ctx, params); err != nil {
+			return err
+		}
+
+		return nil
+	}()
+	if err != nil {
+		s.db.SetJobStatus(ctx, db.SetJobStatusParams{
+			Status: db.StatusEnumFailed,
+			ID:     jobID,
+		})
+		return
 	}
+
+	s.db.SetJobStatus(ctx, db.SetJobStatusParams{
+		Status: db.StatusEnumCompleted,
+		ID:     jobID,
+	})
 }

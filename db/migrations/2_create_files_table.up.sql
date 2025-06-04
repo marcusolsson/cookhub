@@ -6,4 +6,4 @@ CREATE TABLE IF NOT EXISTS files (
     content TEXT NOT NULL,
 
     FOREIGN KEY (job_id) REFERENCES jobs (id)
-)
+);

@@ -13,41 +13,14 @@ import (
 	"strings"
 )
 
-// type Repository struct {
-// 	ID       int    `json:"id"`
-// 	Name     string `json:"name"`
-// 	FullName string `json:"full_name"`
-// 	Owner    struct {
-// 		Login string `json:"login"`
-// 		ID    int    `json:"id"`
-// 		URL   string `json:"html_url"`
-// 	}
-// 	URL             string `json:"html_url"`
-// 	Description     string `json:"description"`
-// 	StargazersCount int    `json:"stargazers_count"`
-// 	WatchersCount   int    `json:"watchers_count"`
-// }
-//
-// func getRepoMetadata(ctx context.Context, repoSlug string) ([]byte, error) {
-// 	u := fmt.Sprintf("https://api.github.com/repos/%s", repoSlug)
-//
-// 	resp, err := http.Get(u)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer resp.Body.Close()
-//
-// 	return io.ReadAll(resp.Body)
-// }
-
-func downloadZipBall(ctx context.Context, repoSlug string) (string, error) {
+func downloadZipBall(ctx context.Context, repoSlug, commitSHA string) (string, error) {
 	folderPath, err := os.MkdirTemp("", "cooklang-")
 	if err != nil {
 		return "", err
 	}
 	defer os.RemoveAll(folderPath)
 
-	u := fmt.Sprintf("https://github.com/%s/zipball/HEAD", repoSlug)
+	u := fmt.Sprintf("https://github.com/%s/zipball/%s", repoSlug, commitSHA)
 
 	resp, err := http.Get(u)
 	if err != nil {

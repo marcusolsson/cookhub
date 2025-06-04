@@ -52,3 +52,16 @@ tasks:
     cmds:
       - go fmt ./...
       - sqlfluff format --dialect postgres ./db --disable-progress-bar
+
+  reset-db:
+    dotenv:
+      - .env.production
+    cmds:
+      - migrate -source file://db/migrations -database $DATABASE_URL drop
+      - migrate -source file://db/migrations -database $DATABASE_URL up
+
+  psql:
+    dotenv:
+      - .env.production
+    cmds:
+      - psql $DATABASE_URL

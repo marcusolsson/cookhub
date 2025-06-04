@@ -1,7 +1,7 @@
 -- name: CreateJob :one
 INSERT INTO jobs (slug, commit_sha) VALUES ($1, $2) RETURNING id;
 
--- name: CreateFile :exec
+-- name: CreateFile :copyfrom
 INSERT INTO files (job_id, name, content) VALUES ($1, $2, $3);
 
 -- name: GetLatestJobBySlug :one
@@ -37,3 +37,6 @@ SELECT
     j.commit_sha
 FROM files AS f
 INNER JOIN jobs AS j ON f.job_id = j.id;
+
+-- name: SetJobStatus :exec
+UPDATE jobs SET status = $1 WHERE id = $2;
