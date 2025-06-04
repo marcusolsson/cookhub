@@ -39,7 +39,7 @@ func main() {
 
 	queries := db.New(pool)
 
-	router := newServer(queries)
+	router := newServer(queries, logger)
 
 	srv := http.Server{
 		Addr:    ":" + cfg.Port,

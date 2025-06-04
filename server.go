@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -11,14 +13,16 @@ import (
 )
 
 type server struct {
-	db *db.Queries
+	db     *db.Queries
+	logger *slog.Logger
 
 	githubClient *GitHubClient
 }
 
-func newServer(qs *db.Queries) chi.Router {
+func newServer(qs *db.Queries, logger *slog.Logger) chi.Router {
 	srv := &server{
 		db:           qs,
+		logger:       logger,
 		githubClient: newGitHubClient(),
 	}
 	r := chi.NewRouter()
@@ -139,43 +143,51 @@ func (s *server) indexRepo(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	jobID, err := s.db.CreateJob(ctx, db.CreateJobParams{Slug: slug, CommitSha: sha})
-	if err != nil {
+	if err := s.runJob(ctx, slug, sha); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
 
-	err = func() error {
-		zipPath, err := downloadZipBall(ctx, slug, sha)
+func (s *server) runJob(ctx context.Context, slug, sha string) (err error) {
+	jobID, err := s.db.CreateJob(ctx, db.CreateJobParams{Slug: slug, CommitSha: sha})
+	if err != nil {
+		return err
+	}
+
+	defer func() {
 		if err != nil {
-			return err
-		}
-
-		var params []db.CreateFileParams
-		for file := range readFilesFromZip(zipPath) {
-			params = append(params, db.CreateFileParams{
-				JobID:   jobID,
-				Name:    file.Name,
-				Content: string(file.Content),
+			s.db.SetJobStatus(ctx, db.SetJobStatusParams{
+				ID:     jobID,
+				Status: db.StatusEnumFailed,
+			})
+		} else {
+			s.db.SetJobStatus(ctx, db.SetJobStatusParams{
+				ID:     jobID,
+				Status: db.StatusEnumCompleted,
 			})
 		}
-
-		if _, err := s.db.CreateFile(ctx, params); err != nil {
-			return err
-		}
-
-		return nil
 	}()
+
+	var zipPath string
+	zipPath, err = downloadZipBall(ctx, slug, sha)
 	if err != nil {
-		s.db.SetJobStatus(ctx, db.SetJobStatusParams{
-			Status: db.StatusEnumFailed,
-			ID:     jobID,
-		})
 		return
 	}
 
-	s.db.SetJobStatus(ctx, db.SetJobStatusParams{
-		Status: db.StatusEnumCompleted,
-		ID:     jobID,
-	})
+	var params []db.CreateFileParams
+	for file := range readFilesFromZip(zipPath) {
+		params = append(params, db.CreateFileParams{
+			JobID:   jobID,
+			Name:    file.Name,
+			Content: string(file.Content),
+		})
+	}
+
+	_, err = s.db.CreateFile(ctx, params)
+	if err != nil {
+		return
+	}
+
+	return
 }
