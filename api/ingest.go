@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	db "github.com/marcusolsson/cookhub/db/sqlc"
 )
 
 func (s *APIServer) getIngestedFiles(w http.ResponseWriter, req *http.Request) {
@@ -24,13 +25,13 @@ func (s *APIServer) getIngestedFiles(w http.ResponseWriter, req *http.Request) {
 		slug = fmt.Sprintf("%s/%s", org, name)
 	)
 
-	jobID, err := s.Store.GetLatestJobBySlug(ctx, slug)
+	jobID, err := s.db.GetLatestJobBySlug(ctx, slug)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	files, err := s.Store.GetFilesByJob(ctx, jobID)
+	files, err := s.db.GetFilesByJob(ctx, jobID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -75,7 +76,7 @@ func (s *APIServer) indexRepo(w http.ResponseWriter, req *http.Request) {
 
 	sha := strings.Split(name, "-")[2]
 
-	jobID, err := s.Store.CreateJob(ctx, slug, sha)
+	jobID, err := s.db.CreateJob(ctx, db.CreateJobParams{Slug: slug, CommitSha: sha})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -101,7 +102,11 @@ func (s *APIServer) indexRepo(w http.ResponseWriter, req *http.Request) {
 				archiveName := strings.TrimSuffix(filepath.Base(zipPath), filepath.Ext(zipPath))
 				relPath := strings.TrimPrefix(file.Name, archiveName)
 
-				if err := s.Store.CreateFile(ctx, jobID, relPath, b); err != nil {
+				if err := s.db.CreateFile(ctx, db.CreateFileParams{
+					JobID:   jobID,
+					Name:    relPath,
+					Content: string(b),
+				}); err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}

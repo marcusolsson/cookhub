@@ -5,17 +5,17 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/marcusolsson/cookhub/db"
+	db "github.com/marcusolsson/cookhub/db/sqlc"
 	"github.com/marcusolsson/cookhub/pkg/recipe"
 )
 
 type server struct {
-	Store *db.Store
+	db *db.Queries
 }
 
-func NewRouter(store *db.Store) chi.Router {
+func NewRouter(qs *db.Queries) chi.Router {
 	srv := &server{
-		Store: store,
+		db: qs,
 	}
 	r := chi.NewRouter()
 	r.Get("/github.com/{org}/{name}", srv.getRecipe)
@@ -31,12 +31,12 @@ func (s *server) getRecipe(w http.ResponseWriter, req *http.Request) {
 
 	ctx := req.Context()
 
-	jobID, err := s.Store.GetLatestJobBySlug(ctx, slug)
+	jobID, err := s.db.GetLatestJobBySlug(ctx, slug)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	files, err := s.Store.GetFilesByJob(ctx, jobID)
+	files, err := s.db.GetFilesByJob(ctx, jobID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

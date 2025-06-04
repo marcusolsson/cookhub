@@ -2,16 +2,16 @@ package api
 
 import (
 	"github.com/go-chi/chi/v5"
-	"github.com/marcusolsson/cookhub/db"
+	db "github.com/marcusolsson/cookhub/db/sqlc"
 )
 
 type APIServer struct {
-	Store *db.Store
+	db *db.Queries
 }
 
-func NewRouter(store *db.Store) chi.Router {
+func NewRouter(db *db.Queries) chi.Router {
 	srv := &APIServer{
-		Store: store,
+		db: db,
 	}
 	r := chi.NewRouter()
 

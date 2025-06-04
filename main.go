@@ -13,7 +13,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/marcusolsson/cookhub/api"
-	dbpkg "github.com/marcusolsson/cookhub/db"
+	db "github.com/marcusolsson/cookhub/db/sqlc"
 	"github.com/marcusolsson/cookhub/ui"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -45,20 +45,10 @@ func main() {
 
 	logger.Info("Successfully connected to the database")
 
-	store := dbpkg.NewStore(pool)
+	queries := db.New(pool)
 
-	if err := store.CreateJobsTable(ctx); err != nil {
-		logger.Error("Failed to create jobs table", "error", err)
-		os.Exit(1)
-	}
-
-	if err := store.CreateFilesTable(ctx); err != nil {
-		logger.Error("Failed to create files table", "error", err)
-		os.Exit(1)
-	}
-
-	apisrv := api.NewRouter(store)
-	uisrv := ui.NewRouter(store)
+	apisrv := api.NewRouter(queries)
+	uisrv := ui.NewRouter(queries)
 
 	r := chi.NewRouter()
 	r.Mount("/api", apisrv)
