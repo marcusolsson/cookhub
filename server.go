@@ -172,6 +172,7 @@ func (s *server) runJob(ctx context.Context, slug, sha string) (err error) {
 	var zipPath string
 	zipPath, err = downloadZipBall(ctx, slug, sha)
 	if err != nil {
+		s.logger.Error("Failed to download zipball", "error", err)
 		return
 	}
 
@@ -186,6 +187,7 @@ func (s *server) runJob(ctx context.Context, slug, sha string) (err error) {
 
 	_, err = s.db.CreateFile(ctx, params)
 	if err != nil {
+		s.logger.Error("Failed to create files in database", "error", err)
 		return
 	}
 
