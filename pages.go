@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -51,9 +52,9 @@ func (s *server) pageShowRecipe(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	schemaOrgRecipe := ConvertCooklangToSchemaOrg(file.Name, cooklangRecipe)
+	name := strings.TrimSuffix(filepath.Base(file.Name), filepath.Ext(file.Name))
 
-	recipeView(schemaOrgRecipe).Render(ctx, w)
+	recipeView(name, cooklangRecipe).Render(ctx, w)
 }
 
 func (s *server) pageListJobs(w http.ResponseWriter, req *http.Request) {

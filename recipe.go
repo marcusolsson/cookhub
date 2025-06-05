@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/aquilax/cooklang-go"
 )
@@ -79,6 +80,17 @@ func getIngredients(recipe *cooklang.RecipeV2) []string {
 	return res
 }
 
+func ingredientAsString(ingredient cooklang.IngredientV2) string {
+	switch {
+	case ingredient.Units == "" && ingredient.Quantity == 0:
+		return ingredient.Name
+	case ingredient.Units == "":
+		return fmt.Sprintf("%v %s", ingredient.Quantity, ingredient.Name)
+	default:
+		return fmt.Sprintf("%v %s %s", ingredient.Quantity, ingredient.Units, ingredient.Name)
+	}
+}
+
 func getInstructions(recipe *cooklang.RecipeV2) []SchemaOrgHowToStep {
 	var res []SchemaOrgHowToStep
 	var stepBuilder strings.Builder
@@ -106,4 +118,42 @@ func getInstructions(recipe *cooklang.RecipeV2) []SchemaOrgHowToStep {
 	}
 
 	return res
+}
+
+func timerAsDuration(timer cooklang.TimerV2) time.Duration {
+	switch timer.Unit {
+	case "s", "sec", "second", "seconds":
+		return time.Duration(timer.Quantity) * time.Second
+	case "m", "min", "minute", "minutes":
+		return time.Duration(timer.Quantity) * time.Minute
+	case "h", "hour", "hours":
+		return time.Duration(timer.Quantity) * time.Hour
+	default:
+		return 0
+	}
+}
+
+func DurationToISO8601(d time.Duration) string {
+	if d == 0 {
+		return "PT0S"
+	}
+
+	var result strings.Builder
+	result.WriteString("PT")
+
+	hours := int(d.Hours())
+	minutes := int(d.Minutes()) % 60
+	seconds := int(d.Seconds()) % 60
+
+	if hours > 0 {
+		result.WriteString(fmt.Sprintf("%dH", hours))
+	}
+	if minutes > 0 {
+		result.WriteString(fmt.Sprintf("%dM", minutes))
+	}
+	if seconds > 0 {
+		result.WriteString(fmt.Sprintf("%dS", seconds))
+	}
+
+	return result.String()
 }

@@ -1,21 +1,45 @@
 package main
 
-templ recipeView(recipe SchemaOrgRecipe) {
+import (
+	"strings"
+	"fmt"
+
+	"github.com/aquilax/cooklang-go"
+)
+
+templ recipeView(name string, recipe *cooklang.RecipeV2) {
 	<html>
 		<body>
 			<main class={ mainContainer() }>
-				<h1>{ recipe.Name }</h1>
+				<h1>{ name }</h1>
 				<div style="display: flex; gap: 20px;">
 					<aside style="flex: 1;">
 						<h2>Ingredients</h2>
-						for _, ingredient := range recipe.RecipeIngredient {
+						for _, ingredient := range getIngredients(recipe) {
 							<p>{ ingredient }</p>
 						}
 					</aside>
 					<section style="flex: 3;">
 						<h2>Instructions</h2>
-						for _, instruction := range recipe.RecipeInstructions {
-							<p>{ instruction.Text }</p>
+						for _, step := range recipe.Steps {
+							for _, component := range step {
+								switch val := component.(type) {
+									case cooklang.TextV2:
+										<span>{ val.Value }</span>
+										if strings.HasSuffix(val.Value, ".") {
+											<br/>
+											<br/>
+										}
+									case cooklang.IngredientV2:
+										<dfn title={ ingredientAsString(val) }>{ val.Name }</dfn>
+									case cooklang.CookwareV2:
+										<span>{ val.Name }</span>
+									case cooklang.TimerV2:
+										<time datetime={ DurationToISO8601(timerAsDuration(val)) }>
+											{ fmt.Sprintf("%v %s", val.Quantity, val.Unit) }
+										</time>
+								}
+							}
 						}
 					</section>
 				</div>
