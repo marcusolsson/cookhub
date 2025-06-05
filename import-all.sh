@@ -1,6 +1,7 @@
 #!/bin/bash
 
 config_files=(
+	cooklang/recipes
 	nicholaswilde/recipes
 	Net-Mist/remy
 	dubadub/cookbook
@@ -43,6 +44,7 @@ config_files=(
 )
 
 for config in "${config_files[@]}"; do
+    echo "Importing ${config}..."
     curl -X POST https://cookhubcrszaybz-container-quirky-cannon.functions.fnc.fr-par.scw.cloud/api/github.com/${config}
 done
 

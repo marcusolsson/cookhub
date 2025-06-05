@@ -23,7 +23,7 @@ templ recipesView(recipes []db.GetRecipesRow) {
 							<tr>
 								<td>
 									<a
-										href={ templ.URL("/ui/github.com/" +
+										href={ templ.URL("/github.com/" +
                                 recipe.Slug + recipe.Name) }
 									>{ recipe.Name }</a>
 								</td>

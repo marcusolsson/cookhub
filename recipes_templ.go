@@ -65,7 +65,7 @@ func recipesView(recipes []db.GetRecipesRow) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var4 templ.SafeURL = templ.URL("/ui/github.com/" +
+			var templ_7745c5c3_Var4 templ.SafeURL = templ.URL("/github.com/" +
 				recipe.Slug + recipe.Name)
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var4)))
 			if templ_7745c5c3_Err != nil {
