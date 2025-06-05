@@ -27,6 +27,7 @@ func newServer(qs *db.Queries, logger *slog.Logger) chi.Router {
 
 	r.Route("/api", func(r chi.Router) {
 		r.Post("/github.com/{org}/{name}", srv.apiIndexRepo)
+		r.Get("/metadata", srv.apiListMetadata)
 	})
 
 	return r

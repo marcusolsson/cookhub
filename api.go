@@ -100,3 +100,35 @@ func (s *server) runJob(ctx context.Context, slug, sha string) (jobErr error) {
 
 	return
 }
+
+func (s *server) apiListMetadata(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	files, err := s.db.GetAllFiles(ctx)
+	if err != nil {
+		s.logger.Error("Failed to get files from database", "error", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fields := map[string]int{}
+
+	for _, file := range files {
+		recipe, err := ParseCooklangRecipe(file.Name, file.Content)
+		if err != nil {
+			continue
+		}
+
+		for key := range recipe.Metadata {
+			if _, ok := fields[key]; !ok {
+				fields[key] = 0
+			}
+
+			fields[key]++
+		}
+	}
+
+	for key, count := range fields {
+		s.logger.Info(key, "count", count)
+	}
+}

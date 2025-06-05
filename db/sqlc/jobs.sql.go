@@ -33,6 +33,36 @@ func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (string, e
 	return id, err
 }
 
+const getAllFiles = `-- name: GetAllFiles :many
+SELECT id, created_at, job_id, name, content FROM files
+`
+
+func (q *Queries) GetAllFiles(ctx context.Context) ([]File, error) {
+	rows, err := q.db.Query(ctx, getAllFiles)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []File
+	for rows.Next() {
+		var i File
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.JobID,
+			&i.Name,
+			&i.Content,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getFileByName = `-- name: GetFileByName :one
 SELECT
     created_at,

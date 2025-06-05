@@ -40,3 +40,6 @@ INNER JOIN jobs AS j ON f.job_id = j.id;
 
 -- name: SetJobStatus :exec
 UPDATE jobs SET status = $1 WHERE id = $2;
+
+-- name: GetAllFiles :many
+SELECT * FROM files;
