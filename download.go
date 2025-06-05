@@ -13,13 +13,7 @@ import (
 	"strings"
 )
 
-func downloadZipBall(ctx context.Context, repoSlug, commitSHA string) (string, error) {
-	folderPath, err := os.MkdirTemp("", "cooklang-")
-	if err != nil {
-		return "", err
-	}
-	defer os.RemoveAll(folderPath)
-
+func downloadZipBall(ctx context.Context, repoSlug, commitSHA, folderPath string) (string, error) {
 	u := fmt.Sprintf("https://github.com/%s/zipball/%s", repoSlug, commitSHA)
 
 	resp, err := http.Get(u)
