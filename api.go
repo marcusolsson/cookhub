@@ -114,7 +114,7 @@ func (s *server) apiListMetadata(w http.ResponseWriter, req *http.Request) {
 	fields := map[string]int{}
 
 	for _, file := range files {
-		recipe, err := parseCooklangRecipe(file.Name, file.Content)
+		recipe, err := parseCooklangRecipe(file.Content)
 		if err != nil {
 			continue
 		}

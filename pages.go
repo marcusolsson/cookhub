@@ -46,7 +46,7 @@ func (s *server) pageShowRecipe(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	cooklangRecipe, err := parseCooklangRecipe(file.Name, file.Content)
+	cooklangRecipe, err := parseCooklangRecipe(file.Content)
 	if err != nil {
 		ctxlog.Error("Failed to parse Cooklang recipe", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
