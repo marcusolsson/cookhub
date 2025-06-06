@@ -1,11 +1,11 @@
-package main
+package views
 
 import (
 	"time"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
 )
 
-templ recipesView(recipes []db.GetRecipesRow) {
+templ JobsView(jobs []db.Job) {
 	<html>
 		<body>
 			<main class={ mainContainer() }>
@@ -13,23 +13,24 @@ templ recipesView(recipes []db.GetRecipesRow) {
 				<table style="width: 100%; border-collapse: collapse;">
 					<thead>
 						<tr>
-							<th style="text-align: left">Recipe</th>
-							<th style="text-align: left">Repository</th>
+							<th style="text-align: left">Slug</th>
+							<th style="text-align: left">Commit SHA</th>
 							<th style="text-align: left">Created at</th>
 						</tr>
 					</thead>
 					<tbody>
-						for _, recipe := range recipes {
+						for _, job := range jobs {
 							<tr>
 								<td>
 									<a
 										href={ templ.URL("/github.com/" +
-                                recipe.Slug + recipe.Name) }
-									>{ recipe.Name }</a>
+                                job.Slug) }
+									>{ job.Slug }</a>
 								</td>
+								<td>{ job.CommitSha }</td>
 								<td>
 									{ 
-                                            recipe.CreatedAt.Time.Format(time.RFC3339) }
+                                            job.CreatedAt.Time.Format(time.RFC3339) }
 								</td>
 							</tr>
 						}

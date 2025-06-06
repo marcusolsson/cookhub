@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
+	"github.com/marcusolsson/cookhub/views"
 )
 
 func (s *server) pageShowRecipe(w http.ResponseWriter, req *http.Request) {
@@ -45,7 +46,7 @@ func (s *server) pageShowRecipe(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	cooklangRecipe, err := ParseCooklangRecipe(file.Name, file.Content)
+	cooklangRecipe, err := parseCooklangRecipe(file.Name, file.Content)
 	if err != nil {
 		ctxlog.Error("Failed to parse Cooklang recipe", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -54,7 +55,7 @@ func (s *server) pageShowRecipe(w http.ResponseWriter, req *http.Request) {
 
 	name := strings.TrimSuffix(filepath.Base(file.Name), filepath.Ext(file.Name))
 
-	recipeView(name, cooklangRecipe).Render(ctx, w)
+	views.RecipeView(name, cooklangRecipe).Render(ctx, w)
 }
 
 func (s *server) pageListJobs(w http.ResponseWriter, req *http.Request) {
@@ -67,7 +68,7 @@ func (s *server) pageListJobs(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	jobsView(jobs).Render(ctx, w)
+	views.JobsView(jobs).Render(ctx, w)
 }
 
 func (s *server) pageListRecipes(w http.ResponseWriter, req *http.Request) {
@@ -80,5 +81,5 @@ func (s *server) pageListRecipes(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	recipesView(recipes).Render(ctx, w)
+	views.RecipesView(recipes).Render(ctx, w)
 }

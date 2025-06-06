@@ -1,4 +1,4 @@
-package main
+package views
 
 import (
 	"strings"
@@ -7,7 +7,7 @@ import (
 	"github.com/aquilax/cooklang-go"
 )
 
-templ recipeView(name string, recipe *cooklang.RecipeV2) {
+templ RecipeView(name string, recipe *cooklang.RecipeV2) {
 	<html>
 		<body>
 			<main class={ mainContainer() }>
