@@ -1,12 +1,174 @@
 package views
 
 import (
+	"cmp"
 	"fmt"
+	"net/url"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/aquilax/cooklang-go"
+	db "github.com/marcusolsson/cookhub/db/sqlc"
 )
+
+type RecipeMetadata struct {
+	File   db.GetFileByNameRow
+	Recipe *cooklang.RecipeV2
+
+	normalized map[string]any
+}
+
+func ParseCanonicalMetadata(recipe *cooklang.RecipeV2, file db.GetFileByNameRow) *RecipeMetadata {
+	normalized := make(map[string]any)
+
+	for key, value := range recipe.Metadata {
+		normalized[strings.ToLower(key)] = value
+	}
+
+	for key, value := range normalized {
+		fmt.Printf("%q: %q (%T) \n", key, value, value)
+	}
+
+	return &RecipeMetadata{
+		File:       file,
+		Recipe:     recipe,
+		normalized: normalized,
+	}
+}
+
+func (rm RecipeMetadata) Title() string {
+	return cmp.Or(
+		rm.getStringProperty("title"),
+		rm.getStringProperty("name"),
+		strings.TrimSuffix(
+			filepath.Base(rm.File.Name),
+			filepath.Ext(rm.File.Name),
+		),
+	)
+}
+
+func (rm *RecipeMetadata) Description() string {
+	return cmp.Or(
+		rm.getStringProperty("introduction"),
+		rm.getStringProperty("description"),
+	)
+}
+
+func (rm *RecipeMetadata) ImageURL() string {
+	return cmp.Or(
+		rm.getStringProperty("image"),
+		rm.getStringProperty("picture"),
+	)
+}
+
+func (rm *RecipeMetadata) Servings() float64 {
+	return cmp.Or(
+		rm.getNumericProperty("servings"),
+		rm.getNumericProperty("serves"),
+		rm.getNumericProperty("yield"),
+	)
+}
+
+func (rm *RecipeMetadata) Cuisine() string {
+	return rm.getStringProperty("cuisine")
+}
+
+func (rm *RecipeMetadata) Course() string {
+	return rm.getStringProperty("course")
+}
+
+func (rm *RecipeMetadata) Category() string {
+	return rm.getStringProperty("category")
+}
+
+func (rm *RecipeMetadata) Difficulty() string {
+	return rm.getStringProperty("difficulty")
+}
+
+func (rm *RecipeMetadata) Diet() string {
+	return rm.getStringProperty("diet")
+}
+
+func (rm *RecipeMetadata) Source() *url.URL {
+	rawSource := cmp.Or(
+		rm.getStringProperty("source"),
+	)
+
+	if rawSource == "" {
+		return nil
+	}
+
+	source, err := url.Parse(rawSource)
+	if err != nil {
+		return nil
+	}
+
+	return source
+}
+
+func (rm *RecipeMetadata) Tags() []string {
+	if stringTags, ok := rm.Recipe.Metadata["tags"].(string); ok {
+		return strings.Split(stringTags, ",")
+	}
+
+	if anyTags, ok := rm.Recipe.Metadata["tags"].([]any); ok {
+		var tags []string
+		for _, tag := range anyTags {
+			if str, ok := tag.(string); ok {
+				tags = append(tags, str)
+			}
+		}
+		return tags
+	}
+
+	return []string{}
+}
+
+func (rm *RecipeMetadata) TotalTime() string {
+	return cmp.Or(
+		rm.getStringProperty("time required"),
+		rm.getStringProperty("time"),
+		rm.getStringProperty("duration"),
+		rm.getStringProperty("total time"),
+	)
+}
+
+func (rm *RecipeMetadata) PrepTime() string {
+	return cmp.Or(
+		rm.getStringProperty("prep time"),
+	)
+}
+
+func (rm *RecipeMetadata) CookTime() string {
+	return cmp.Or(
+		rm.getStringProperty("cook time"),
+	)
+}
+
+func (rm *RecipeMetadata) getStringProperty(name string) string {
+	if str, ok := rm.normalized[name].(string); ok {
+		return str
+	}
+	return ""
+}
+
+func (rm *RecipeMetadata) getNumericProperty(name string) float64 {
+	if val, ok := rm.normalized[name].(int); ok {
+		return float64(val)
+	}
+	if val, ok := rm.normalized[name].(float64); ok {
+		return val
+	}
+	if val, ok := rm.normalized[name].(string); ok {
+		v, err := strconv.ParseFloat(val, 64)
+		if err == nil {
+			return v
+		}
+	}
+	return 0.0
+}
 
 func getCategory(recipe *cooklang.RecipeV2) string {
 	if category, ok := recipe.Metadata["course"].(string); ok {

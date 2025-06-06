@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	db "github.com/marcusolsson/cookhub/db/sqlc"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -37,9 +36,9 @@ func main() {
 
 	logger.Info("Successfully connected to the database")
 
-	queries := db.New(pool)
+	ghClient := newGitHubClient(cfg.GitHub.Token)
 
-	router := newServer(queries, logger)
+	router := newServer(pool, ghClient, logger)
 
 	srv := http.Server{
 		Addr:    ":" + cfg.Port,

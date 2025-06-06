@@ -69,3 +69,13 @@ type Job struct {
 	CommitSha string
 	Status    StatusEnum
 }
+
+type RepoMetadatum struct {
+	ID        string
+	CreatedAt pgtype.Timestamptz
+	JobID     string
+	Provider  string
+	Owner     string
+	Name      string
+	Response  []byte
+}

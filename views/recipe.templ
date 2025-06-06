@@ -7,10 +7,58 @@ import (
 	"github.com/aquilax/cooklang-go"
 )
 
-templ RecipeView(name string, recipe *cooklang.RecipeV2) {
+templ RecipeView(meta *RecipeMetadata, recipe *cooklang.RecipeV2, raw string) {
 	@pageContainer() {
 		<main>
-			<h1>{ name }</h1>
+			<header>
+				<h1>{ meta.Title() }</h1>
+				if desc := meta.Description(); desc != "" {
+					<p>{ desc }</p>
+				}
+				<div>
+					for _, tag := range meta.Tags() {
+						<span class={ tagStyle() }>{ tag }</span>
+					}
+				</div>
+				if u := meta.ImageURL(); u != "" {
+					<img src={ u } alt={ meta.Title() } style="max-width: 50%; height: auto;"/>
+				}
+				<table>
+					<tbody>
+						if servings := meta.Servings(); servings > 0 {
+							<tr><td>Servings</td><td>{ servings }</td></tr>
+						}
+						if cuisine := meta.Cuisine(); cuisine != "" {
+							<tr><td>Cuisine</td><td>{ cuisine }</td></tr>
+						}
+						if course := meta.Course(); course != "" {
+							<tr><td>Course</td><td>{ course }</td></tr>
+						}
+						if category := meta.Category(); category != "" {
+							<tr><td>Category</td><td>{ category }</td></tr>
+						}
+						if source := meta.Source(); source != nil {
+							<tr>
+								<td>Source</td>
+								<td>
+									<a
+										href={ templ.URL(source.String()) }
+									>Link</a>
+								</td>
+							</tr>
+						}
+						if t := meta.TotalTime(); t != "" {
+							<tr><td>Total time</td><td>{ t }</td></tr>
+						}
+						if t := meta.PrepTime(); t != "" {
+							<tr><td>Prep time</td><td>{ t }</td></tr>
+						}
+						if t := meta.CookTime(); t != "" {
+							<tr><td>Cook time</td><td>{ t }</td></tr>
+						}
+					</tbody>
+				</table>
+			</header>
 			<div style="display: flex; gap: 20px;">
 				<aside style="flex: 1;">
 					<h2>Ingredients</h2>
@@ -42,6 +90,30 @@ templ RecipeView(name string, recipe *cooklang.RecipeV2) {
 					}
 				</section>
 			</div>
+			<pre class={ pre() }>
+				<code>{ raw }</code>
+			</pre>
 		</main>
 	}
+}
+
+css tagStyle() {
+	display: inline-block;
+	background-color: #e0e0e0;
+	color: #333;
+	border-radius: 4px;
+	padding: 0.2em 0.5em;
+	margin-right: 0.5em;
+	font-size: 0.9em;
+}
+
+css pre() {
+	white-space: pre-wrap;
+	word-break: break-all;
+	overflow-x: auto;
+	padding: 1em;
+	background-color: #f5f5f5;
+	border-radius: 4px;
+	font-family: monospace, monospace;
+	font-size: 0.9em;
 }

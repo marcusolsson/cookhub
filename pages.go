@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"path/filepath"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
@@ -14,21 +12,17 @@ import (
 // pageShowRecipe renders the page for a specific recipe.
 func (s *server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error {
 	var (
-		org  = chi.URLParam(req, "org")
-		repo = chi.URLParam(req, "repo")
-		slug = fmt.Sprintf("%s/%s", org, repo)
-	)
-
-	filename := strings.TrimPrefix(
-		req.URL.Path,
-		fmt.Sprintf("/github.com/%s/%s", org, repo),
+		owner    = chi.URLParam(req, "owner")
+		name     = chi.URLParam(req, "name")
+		filename = "/" + chi.URLParam(req, "*")
+		fullName = fmt.Sprintf("%s/%s", owner, name)
 	)
 
 	ctx := req.Context()
 
-	ctxlog := s.logger.With("slug", slug, "filename", filename)
+	ctxlog := s.logger.With("slug", fullName, "filename", filename)
 
-	jobID, err := s.db.GetLatestJobBySlug(ctx, slug)
+	jobID, err := s.db.GetLatestJobBySlug(ctx, fullName)
 	if err != nil {
 		return fmt.Errorf("failed to get latest job by slug: %w", err)
 	}
@@ -48,12 +42,10 @@ func (s *server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error 
 		return fmt.Errorf("failed to parse Cooklang recipe: %w", err)
 	}
 
-	name := strings.TrimSuffix(
-		filepath.Base(file.Name),
-		filepath.Ext(file.Name),
-	)
+	metadata := views.ParseCanonicalMetadata(recipe, file)
+	component := views.RecipeView(metadata, recipe, file.Content)
 
-	return views.RecipeView(name, recipe).Render(ctx, w)
+	return component.Render(ctx, w)
 }
 
 // pageListJobs renders the page that lists all jobs.

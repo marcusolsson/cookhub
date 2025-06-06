@@ -5,30 +5,34 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
 	"github.com/marcusolsson/cookhub/views"
 )
 
 type server struct {
-	db       *db.Queries
+	pool     *pgxpool.Pool
 	logger   *slog.Logger
 	ghClient *GitHubClient
+
+	db *db.Queries
 }
 
-func newServer(qs *db.Queries, logger *slog.Logger) chi.Router {
+func newServer(pool *pgxpool.Pool, ghClient *GitHubClient, logger *slog.Logger) chi.Router {
 	srv := &server{
-		db:       qs,
+		pool:     pool,
 		logger:   logger,
-		ghClient: newGitHubClient(),
+		ghClient: ghClient,
+		db:       db.New(pool),
 	}
 
 	r := chi.NewRouter()
-	r.Get("/github.com/{org}/{repo}/*", srv.handleError(srv.pageShowRecipe))
+	r.Get("/{provider}/{owner}/{name}/*", srv.handleError(srv.pageShowRecipe))
 	r.Get("/jobs", srv.handleError(srv.pageListJobs))
 	r.Get("/recipes", srv.handleError(srv.pageListRecipes))
 
 	r.Route("/api", func(r chi.Router) {
-		r.Post("/github.com/{org}/{name}", srv.apiIndexRepo)
+		r.Post("/{provider}/{owner}/{name}", srv.apiIndexRepo)
 		r.Get("/metadata", srv.apiListMetadata)
 	})
 

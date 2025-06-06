@@ -11,6 +11,29 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addRepositoryMetadata = `-- name: AddRepositoryMetadata :exec
+INSERT INTO repo_metadata (job_id, provider, owner, name, response) VALUES ($1, $2, $3, $4, $5)
+`
+
+type AddRepositoryMetadataParams struct {
+	JobID    string
+	Provider string
+	Owner    string
+	Name     string
+	Response []byte
+}
+
+func (q *Queries) AddRepositoryMetadata(ctx context.Context, arg AddRepositoryMetadataParams) error {
+	_, err := q.db.Exec(ctx, addRepositoryMetadata,
+		arg.JobID,
+		arg.Provider,
+		arg.Owner,
+		arg.Name,
+		arg.Response,
+	)
+	return err
+}
+
 type CreateFileParams struct {
 	JobID   string
 	Name    string
