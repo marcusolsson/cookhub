@@ -103,10 +103,12 @@ templ RecipeView(meta *RecipeMetadata, author Author, recipe *cooklang.RecipeV2,
 					}
 				</section>
 			</div>
-			<h2>Raw recipe</h2>
-			<pre class={ pre() }>
-				<code>{ raw }</code>
-			</pre>
+			<details>
+				<summary>View the raw recipe</summary>
+				<pre class={ pre() }>
+					<code>{ raw }</code>
+				</pre>
+			</details>
 		</main>
 	}
 }
@@ -130,4 +132,5 @@ css pre() {
 	border-radius: 4px;
 	font-family: monospace, monospace;
 	font-size: 0.9em;
+	font-family: Menlo,Monaco,Consolas,"Courier New",monospace;
 }

@@ -494,7 +494,7 @@ func RecipeView(meta *RecipeMetadata, author Author, recipe *cooklang.RecipeV2, 
 					}
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</section></div><h2>Raw recipe</h2>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</section></div><details><summary>View the raw recipe</summary>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -523,13 +523,13 @@ func RecipeView(meta *RecipeMetadata, author Author, recipe *cooklang.RecipeV2, 
 			var templ_7745c5c3_Var31 string
 			templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(raw)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/recipe.templ`, Line: 108, Col: 15}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/recipe.templ`, Line: 109, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</code></pre></main>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</code></pre></details></main>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -569,6 +569,7 @@ func pre() templ.CSSClass {
 	templ_7745c5c3_CSSBuilder.WriteString(`border-radius:4px;`)
 	templ_7745c5c3_CSSBuilder.WriteString(`font-family:monospace, monospace;`)
 	templ_7745c5c3_CSSBuilder.WriteString(`font-size:0.9em;`)
+	templ_7745c5c3_CSSBuilder.WriteString(`font-family:Menlo,Monaco,Consolas,"Courier New",monospace;`)
 	templ_7745c5c3_CSSID := templ.CSSID(`pre`, templ_7745c5c3_CSSBuilder.String())
 	return templ.ComponentCSSClass{
 		ID:    templ_7745c5c3_CSSID,

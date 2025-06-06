@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/patrickmn/go-cache"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -36,9 +37,11 @@ func main() {
 
 	logger.Info("Successfully connected to the database")
 
+	c := cache.New(cache.NoExpiration, cache.NoExpiration)
+
 	ghClient := newGitHubClient(cfg.GitHub.Token)
 
-	router := newServer(pool, ghClient, logger)
+	router := newServer(pool, ghClient, logger, c)
 
 	srv := http.Server{
 		Addr:    ":" + cfg.Port,

@@ -8,22 +8,29 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
 	"github.com/marcusolsson/cookhub/views"
+	"github.com/patrickmn/go-cache"
 )
 
 type server struct {
 	pool     *pgxpool.Pool
 	logger   *slog.Logger
 	ghClient *GitHubClient
-
-	db *db.Queries
+	db       *db.Queries
+	c        *cache.Cache
 }
 
-func newServer(pool *pgxpool.Pool, ghClient *GitHubClient, logger *slog.Logger) chi.Router {
+func newServer(
+	pool *pgxpool.Pool,
+	ghClient *GitHubClient,
+	logger *slog.Logger,
+	c *cache.Cache,
+) chi.Router {
 	srv := &server{
 		pool:     pool,
 		logger:   logger,
 		ghClient: ghClient,
 		db:       db.New(pool),
+		c:        c,
 	}
 
 	r := chi.NewRouter()

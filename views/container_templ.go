@@ -115,6 +115,7 @@ func mainContainer() templ.CSSClass {
 	templ_7745c5c3_CSSBuilder.WriteString(`line-height:1.5;`)
 	templ_7745c5c3_CSSBuilder.WriteString(`margin:0 auto;`)
 	templ_7745c5c3_CSSBuilder.WriteString(`max-width:800px;`)
+	templ_7745c5c3_CSSBuilder.WriteString(`font-size:18px;`)
 	templ_7745c5c3_CSSID := templ.CSSID(`mainContainer`, templ_7745c5c3_CSSBuilder.String())
 	return templ.ComponentCSSClass{
 		ID:    templ_7745c5c3_CSSID,
