@@ -5,5 +5,5 @@ CREATE TABLE jobs (
     created_at TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
     slug TEXT NOT NULL,
     commit_sha TEXT NOT NULL UNIQUE,
-    status status_enum NOT NULL DEFAULT 'pending'
+    status STATUS_ENUM NOT NULL DEFAULT 'pending'
 );

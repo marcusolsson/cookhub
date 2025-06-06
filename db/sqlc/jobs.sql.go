@@ -12,7 +12,9 @@ import (
 )
 
 const addRepositoryMetadata = `-- name: AddRepositoryMetadata :exec
-INSERT INTO repo_metadata (job_id, provider, owner, name, response) VALUES ($1, $2, $3, $4, $5)
+INSERT INTO repo_metadata (job_id, provider, owner, name, response) VALUES (
+    $1, $2, $3, $4, $5
+)
 `
 
 type AddRepositoryMetadataParams struct {
@@ -236,8 +238,29 @@ func (q *Queries) GetRecipes(ctx context.Context) ([]GetRecipesRow, error) {
 	return items, nil
 }
 
+const getRepoMetadataByJob = `-- name: GetRepoMetadataByJob :one
+SELECT id, created_at, job_id, provider, owner, name, response FROM repo_metadata
+WHERE job_id = $1
+`
+
+func (q *Queries) GetRepoMetadataByJob(ctx context.Context, jobID string) (RepoMetadatum, error) {
+	row := q.db.QueryRow(ctx, getRepoMetadataByJob, jobID)
+	var i RepoMetadatum
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.JobID,
+		&i.Provider,
+		&i.Owner,
+		&i.Name,
+		&i.Response,
+	)
+	return i, err
+}
+
 const setJobStatus = `-- name: SetJobStatus :exec
-UPDATE jobs SET status = $1 WHERE id = $2
+UPDATE jobs SET status = $1
+WHERE id = $2
 `
 
 type SetJobStatusParams struct {

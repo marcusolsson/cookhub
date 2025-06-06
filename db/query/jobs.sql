@@ -39,10 +39,17 @@ FROM files AS f
 INNER JOIN jobs AS j ON f.job_id = j.id;
 
 -- name: SetJobStatus :exec
-UPDATE jobs SET status = $1 WHERE id = $2;
+UPDATE jobs SET status = $1
+WHERE id = $2;
 
 -- name: GetAllFiles :many
 SELECT * FROM files;
 
 -- name: AddRepositoryMetadata :exec
-INSERT INTO repo_metadata (job_id, provider, owner, name, response) VALUES ($1, $2, $3, $4, $5);
+INSERT INTO repo_metadata (job_id, provider, owner, name, response) VALUES (
+    $1, $2, $3, $4, $5
+);
+
+-- name: GetRepoMetadataByJob :one
+SELECT * FROM repo_metadata
+WHERE job_id = $1;

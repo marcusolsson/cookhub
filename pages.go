@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -29,6 +30,14 @@ func (s *server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error 
 
 	ctxlog = ctxlog.With("job_id", jobID)
 
+	repo, err := s.db.GetRepoMetadataByJob(ctx, jobID)
+	if err != nil {
+		return fmt.Errorf("failed to get repo metadata: %w", err)
+	}
+
+	var author views.Author
+	json.Unmarshal(repo.Response, &author)
+
 	file, err := s.db.GetFileByName(ctx, db.GetFileByNameParams{
 		JobID: jobID,
 		Name:  filename,
@@ -43,7 +52,7 @@ func (s *server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error 
 	}
 
 	metadata := views.ParseCanonicalMetadata(recipe, file)
-	component := views.RecipeView(metadata, recipe, file.Content)
+	component := views.RecipeView(metadata, author, recipe, file.Content)
 
 	return component.Render(ctx, w)
 }

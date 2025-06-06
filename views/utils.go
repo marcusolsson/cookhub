@@ -13,6 +13,18 @@ import (
 	db "github.com/marcusolsson/cookhub/db/sqlc"
 )
 
+type Author struct {
+	Name     string `json:"name"`
+	FullName string `json:"full_name"`
+	Owner    struct {
+		Login     string `json:"login"`
+		URL       string `json:"html_url"`
+		AvatarURL string `json:"avatar_url"`
+	} `json:"owner"`
+	URL         string `json:"html_url"`
+	Description string `json:"description"`
+}
+
 type RecipeMetadata struct {
 	File   db.GetFileByNameRow
 	Recipe *cooklang.RecipeV2
@@ -25,10 +37,6 @@ func ParseCanonicalMetadata(recipe *cooklang.RecipeV2, file db.GetFileByNameRow)
 
 	for key, value := range recipe.Metadata {
 		normalized[strings.ToLower(key)] = value
-	}
-
-	for key, value := range normalized {
-		fmt.Printf("%q: %q (%T) \n", key, value, value)
 	}
 
 	return &RecipeMetadata{

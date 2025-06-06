@@ -7,7 +7,7 @@ import (
 	"github.com/aquilax/cooklang-go"
 )
 
-templ RecipeView(meta *RecipeMetadata, recipe *cooklang.RecipeV2, raw string) {
+templ RecipeView(meta *RecipeMetadata, author Author, recipe *cooklang.RecipeV2, raw string) {
 	@pageContainer() {
 		<main>
 			<header>
@@ -20,6 +20,19 @@ templ RecipeView(meta *RecipeMetadata, recipe *cooklang.RecipeV2, raw string) {
 						<span class={ tagStyle() }>{ tag }</span>
 					}
 				</div>
+				<p>
+					<a href={ templ.URL(author.URL) }>View on GitHub</a>
+				</p>
+				<section>
+					<span style="display: flex; align-items: center; gap: 10px;">
+						<img
+							src={ templ.URL(author.Owner.AvatarURL) }
+							alt="Author Avatar"
+							style="width: 24px; height: 24px; border-radius: 50%;"
+						/>
+						<a href={ templ.URL(author.Owner.URL) }>{ author.Owner.Login }</a>
+					</span>
+				</section>
 				if u := meta.ImageURL(); u != "" {
 					<img src={ u } alt={ meta.Title() } style="max-width: 50%; height: auto;"/>
 				}
@@ -90,6 +103,7 @@ templ RecipeView(meta *RecipeMetadata, recipe *cooklang.RecipeV2, raw string) {
 					}
 				</section>
 			</div>
+			<h2>Raw recipe</h2>
 			<pre class={ pre() }>
 				<code>{ raw }</code>
 			</pre>
