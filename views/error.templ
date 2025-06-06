@@ -1,12 +1,10 @@
 package views
 
 templ ErrorPage() {
-	<html>
-		<body>
-			<main class={ mainContainer() }>
-				<h1>An error occurred</h1>
-				<p>The error has been logged and will hopefully be fixed soon.</p>
-			</main>
-		</body>
-	</html>
+	@pageContainer() {
+		<main>
+			<h1>An error occurred</h1>
+			<p>The error has been logged and will hopefully be fixed soon.</p>
+		</main>
+	}
 }

@@ -1,0 +1,30 @@
+package views
+
+templ pageContainer() {
+	<html>
+		@pageHead()
+		<body>
+			<div class={ mainContainer() }>
+				{ children... }
+			</div>
+		</body>
+	</html>
+}
+
+templ pageHead() {
+	<head>
+		<title>CookHub</title>
+	</head>
+}
+
+css mainContainer() {
+	font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, Adwaita Sans, Cantarell, Ubuntu, roboto, noto, helvetica, arial, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	-moz-text-size-adjust: none;
+	-webkit-text-size-adjust: none;
+	text-size-adjust: none;
+	line-height: 1.5;
+	margin: 0 auto;
+	max-width: 800px;
+}

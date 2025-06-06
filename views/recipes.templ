@@ -6,36 +6,25 @@ import (
 )
 
 templ RecipesView(recipes []db.GetRecipesRow) {
-	<html>
-		<body>
-			<main class={ mainContainer() }>
-				<h1>Jobs</h1>
-				<table style="width: 100%; border-collapse: collapse;">
-					<thead>
+	@pageContainer() {
+		<main>
+			<h1>Jobs</h1>
+			<table style="width: 100%; border-collapse: collapse;">
+				<thead>
+					<tr>
+						<th style="text-align: left">Recipe</th>
+						<th style="text-align: left">Created at</th>
+					</tr>
+				</thead>
+				<tbody>
+					for _, recipe := range recipes {
 						<tr>
-							<th style="text-align: left">Recipe</th>
-							<th style="text-align: left">Repository</th>
-							<th style="text-align: left">Created at</th>
+							<td><a href={ templ.URL("/github.com/" + recipe.Slug + recipe.Name) }>{ recipe.Name }</a></td>
+							<td>{ recipe.CreatedAt.Time.Format(time.RFC3339) } </td>
 						</tr>
-					</thead>
-					<tbody>
-						for _, recipe := range recipes {
-							<tr>
-								<td>
-									<a
-										href={ templ.URL("/github.com/" +
-                                recipe.Slug + recipe.Name) }
-									>{ recipe.Name }</a>
-								</td>
-								<td>
-									{ 
-                                            recipe.CreatedAt.Time.Format(time.RFC3339) }
-								</td>
-							</tr>
-						}
-					</tbody>
-				</table>
-			</main>
-		</body>
-	</html>
+					}
+				</tbody>
+			</table>
+		</main>
+	}
 }

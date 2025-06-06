@@ -8,54 +8,40 @@ import (
 )
 
 templ RecipeView(name string, recipe *cooklang.RecipeV2) {
-	<html>
-		<body>
-			<main class={ mainContainer() }>
-				<h1>{ name }</h1>
-				<div style="display: flex; gap: 20px;">
-					<aside style="flex: 1;">
-						<h2>Ingredients</h2>
-						for _, ingredient := range getIngredients(recipe) {
-							<p>{ ingredient }</p>
-						}
-					</aside>
-					<section style="flex: 3;">
-						<h2>Instructions</h2>
-						for _, step := range recipe.Steps {
-							for _, component := range step {
-								switch val := component.(type) {
-									case cooklang.TextV2:
-										<span>{ val.Value }</span>
-										if strings.HasSuffix(val.Value, ".") {
-											<br/>
-											<br/>
-										}
-									case cooklang.IngredientV2:
-										<dfn title={ ingredientAsString(val) }>{ val.Name }</dfn>
-									case cooklang.CookwareV2:
-										<span>{ val.Name }</span>
-									case cooklang.TimerV2:
-										<time datetime={ DurationToISO8601(timerAsDuration(val)) }>
-											{ fmt.Sprintf("%v %s", val.Quantity, val.Unit) }
-										</time>
-								}
+	@pageContainer() {
+		<main>
+			<h1>{ name }</h1>
+			<div style="display: flex; gap: 20px;">
+				<aside style="flex: 1;">
+					<h2>Ingredients</h2>
+					for _, ingredient := range getIngredients(recipe) {
+						<p>{ ingredient }</p>
+					}
+				</aside>
+				<section style="flex: 3;">
+					<h2>Instructions</h2>
+					for _, step := range recipe.Steps {
+						for _, component := range step {
+							switch val := component.(type) {
+								case cooklang.TextV2:
+									<span>{ val.Value }</span>
+									if strings.HasSuffix(val.Value, ".") {
+										<br/>
+										<br/>
+									}
+								case cooklang.IngredientV2:
+									<dfn title={ ingredientAsString(val) }>{ val.Name }</dfn>
+								case cooklang.CookwareV2:
+									<span>{ val.Name }</span>
+								case cooklang.TimerV2:
+									<time datetime={ DurationToISO8601(timerAsDuration(val)) }>
+										{ fmt.Sprintf("%v %s", val.Quantity, val.Unit) }
+									</time>
 							}
 						}
-					</section>
-				</div>
-			</main>
-		</body>
-	</html>
-}
-
-css mainContainer() {
-	font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, Adwaita Sans, Cantarell, Ubuntu, roboto, noto, helvetica, arial, sans-serif;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-	-moz-text-size-adjust: none;
-	-webkit-text-size-adjust: none;
-	text-size-adjust: none;
-	line-height: 1.5;
-	margin: 0 auto;
-	max-width: 800px;
+					}
+				</section>
+			</div>
+		</main>
+	}
 }
