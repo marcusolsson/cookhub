@@ -1,0 +1,18 @@
+
+package views
+
+templ Tag(tag string) {
+	<span class="tag">{ tag }</span>
+}
+
+templ Avatar(src string) {
+	<img src={ templ.URL(src) } alt="Avatar" class="avatar"/>
+}
+
+templ Image(src string) {
+	<img src={ templ.URL(src) }/>
+}
+
+templ Link(label, href string) {
+	<a href={ templ.URL(href) }>{ label }</a>
+}

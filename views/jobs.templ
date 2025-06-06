@@ -6,15 +6,15 @@ import (
 )
 
 templ JobsView(jobs []db.Job) {
-	@pageContainer() {
+	@page() {
 		<main>
 			<h1>Jobs</h1>
-			<table style="width: 100%; border-collapse: collapse;">
+			<table>
 				<thead>
 					<tr>
-						<th style="text-align: left">Slug</th>
-						<th style="text-align: left">Commit SHA</th>
-						<th style="text-align: left">Created at</th>
+						<th>Slug</th>
+						<th>Commit SHA</th>
+						<th>Created at</th>
 					</tr>
 				</thead>
 				<tbody>

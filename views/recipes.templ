@@ -6,14 +6,14 @@ import (
 )
 
 templ RecipesView(recipes []db.GetRecipesRow) {
-	@pageContainer() {
+	@page() {
 		<main>
 			<h1>Jobs</h1>
-			<table style="width: 100%; border-collapse: collapse;">
+			<table>
 				<thead>
 					<tr>
-						<th style="text-align: left">Recipe</th>
-						<th style="text-align: left">Created at</th>
+						<th>Recipe</th>
+						<th>Created at</th>
 					</tr>
 				</thead>
 				<tbody>

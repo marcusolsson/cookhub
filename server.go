@@ -43,6 +43,8 @@ func newServer(
 		r.Get("/metadata", srv.apiListMetadata)
 	})
 
+	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+
 	return r
 }
 

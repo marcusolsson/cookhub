@@ -46,7 +46,7 @@ func JobsView(jobs []db.Job) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<main><h1>Jobs</h1><table style=\"width: 100%; border-collapse: collapse;\"><thead><tr><th style=\"text-align: left\">Slug</th><th style=\"text-align: left\">Commit SHA</th><th style=\"text-align: left\">Created at</th></tr></thead> <tbody>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<main><h1>Jobs</h1><table><thead><tr><th>Slug</th><th>Commit SHA</th><th>Created at</th></tr></thead> <tbody>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -110,7 +110,7 @@ func JobsView(jobs []db.Job) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = pageContainer().Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = page().Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

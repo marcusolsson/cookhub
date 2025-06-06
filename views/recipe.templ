@@ -7,105 +7,24 @@ import (
 	"github.com/aquilax/cooklang-go"
 )
 
+templ columns() {
+	<div class="columns">
+		{ children... }
+	</div>
+}
+
 templ RecipeView(meta *RecipeMetadata, author Author, recipe *cooklang.RecipeV2, raw string) {
-	@pageContainer() {
+	@page() {
 		<main>
-			<header>
-				<h1>{ meta.Title() }</h1>
-				if desc := meta.Description(); desc != "" {
-					<p>{ desc }</p>
-				}
-				<div>
-					for _, tag := range meta.Tags() {
-						<span class={ tagStyle() }>{ tag }</span>
-					}
-				</div>
-				<p>
-					<a href={ templ.URL(author.URL) }>View on GitHub</a>
-				</p>
-				<section>
-					<span style="display: flex; align-items: center; gap: 10px;">
-						<img
-							src={ templ.URL(author.Owner.AvatarURL) }
-							alt="Author Avatar"
-							style="width: 24px; height: 24px; border-radius: 50%;"
-						/>
-						<a href={ templ.URL(author.Owner.URL) }>{ author.Owner.Login }</a>
-					</span>
-				</section>
-				if u := meta.ImageURL(); u != "" {
-					<img src={ u } alt={ meta.Title() } style="max-width: 50%; height: auto;"/>
-				}
-				<table>
-					<tbody>
-						if servings := meta.Servings(); servings > 0 {
-							<tr><td>Servings</td><td>{ servings }</td></tr>
-						}
-						if cuisine := meta.Cuisine(); cuisine != "" {
-							<tr><td>Cuisine</td><td>{ cuisine }</td></tr>
-						}
-						if course := meta.Course(); course != "" {
-							<tr><td>Course</td><td>{ course }</td></tr>
-						}
-						if category := meta.Category(); category != "" {
-							<tr><td>Category</td><td>{ category }</td></tr>
-						}
-						if source := meta.Source(); source != nil {
-							<tr>
-								<td>Source</td>
-								<td>
-									<a
-										href={ templ.URL(source.String()) }
-									>Link</a>
-								</td>
-							</tr>
-						}
-						if t := meta.TotalTime(); t != "" {
-							<tr><td>Total time</td><td>{ t }</td></tr>
-						}
-						if t := meta.PrepTime(); t != "" {
-							<tr><td>Prep time</td><td>{ t }</td></tr>
-						}
-						if t := meta.CookTime(); t != "" {
-							<tr><td>Cook time</td><td>{ t }</td></tr>
-						}
-					</tbody>
-				</table>
-			</header>
-			<div style="display: flex; gap: 20px;">
-				<aside style="flex: 1;">
-					<h2>Ingredients</h2>
-					for _, ingredient := range getIngredients(recipe) {
-						<p>{ ingredient }</p>
-					}
-				</aside>
-				<section style="flex: 3;">
-					<h2>Instructions</h2>
-					for _, step := range recipe.Steps {
-						for _, component := range step {
-							switch val := component.(type) {
-								case cooklang.TextV2:
-									<span>{ val.Value }</span>
-									if strings.HasSuffix(val.Value, ".") {
-										<br/>
-										<br/>
-									}
-								case cooklang.IngredientV2:
-									<dfn title={ ingredientAsString(val) }>{ val.Name }</dfn>
-								case cooklang.CookwareV2:
-									<span>{ val.Name }</span>
-								case cooklang.TimerV2:
-									<time datetime={ DurationToISO8601(timerAsDuration(val)) }>
-										{ fmt.Sprintf("%v %s", val.Quantity, val.Unit) }
-									</time>
-							}
-						}
-					}
-				</section>
-			</div>
+			@recipeHeader(meta, author)
+			@canonicalMetadata(meta)
+			@columns() {
+				@recipeIngredients(recipe)
+				@recipeInstructions(recipe)
+			}
 			<details>
 				<summary>View the raw recipe</summary>
-				<pre class={ pre() }>
+				<pre>
 					<code>{ raw }</code>
 				</pre>
 			</details>
@@ -113,24 +32,109 @@ templ RecipeView(meta *RecipeMetadata, author Author, recipe *cooklang.RecipeV2,
 	}
 }
 
-css tagStyle() {
-	display: inline-block;
-	background-color: #e0e0e0;
-	color: #333;
-	border-radius: 4px;
-	padding: 0.2em 0.5em;
-	margin-right: 0.5em;
-	font-size: 0.9em;
+templ recipeHeader(meta *RecipeMetadata, a Author) {
+	<header class="recipe-header">
+		<h1>{ meta.Title() }</h1>
+		if desc := meta.Description(); desc != "" {
+			<p>{ desc }</p>
+		}
+		if len(meta.Tags()) > 0 {
+			<div>
+				for _, t := range meta.Tags() {
+					@Tag(t)
+				}
+			</div>
+		}
+		<section>
+			@author(a)
+			@Link("View on GitHub", a.URL)
+		</section>
+		if u := meta.ImageURL(); u != "" {
+			@Image(u)
+		}
+	</header>
 }
 
-css pre() {
-	white-space: pre-wrap;
-	word-break: break-all;
-	overflow-x: auto;
-	padding: 1em;
-	background-color: #f5f5f5;
-	border-radius: 4px;
-	font-family: monospace, monospace;
-	font-size: 0.9em;
-	font-family: Menlo,Monaco,Consolas,"Courier New",monospace;
+templ author(a Author) {
+	<div class="author">
+		@Avatar(a.Owner.AvatarURL)
+		@Link(a.Owner.Login, a.Owner.URL)
+	</div>
+}
+
+templ canonicalMetadata(meta *RecipeMetadata) {
+	<table>
+		<tbody>
+			if servings := meta.Servings(); servings > 0 {
+				<tr><td>Servings</td><td>{ servings }</td></tr>
+			}
+			if cuisine := meta.Cuisine(); cuisine != "" {
+				<tr><td>Cuisine</td><td>{ cuisine }</td></tr>
+			}
+			if course := meta.Course(); course != "" {
+				<tr><td>Course</td><td>{ course }</td></tr>
+			}
+			if category := meta.Category(); category != "" {
+				<tr><td>Category</td><td>{ category }</td></tr>
+			}
+			if source := meta.Source(); source != nil {
+				<tr>
+					<td>Source</td>
+					<td>
+						<a
+							href={ templ.URL(source.String()) }
+						>Link</a>
+					</td>
+				</tr>
+			}
+			if t := meta.TotalTime(); t != "" {
+				<tr><td>Total time</td><td>{ t }</td></tr>
+			}
+			if t := meta.PrepTime(); t != "" {
+				<tr><td>Prep time</td><td>{ t }</td></tr>
+			}
+			if t := meta.CookTime(); t != "" {
+				<tr><td>Cook time</td><td>{ t }</td></tr>
+			}
+		</tbody>
+	</table>
+}
+
+templ recipeIngredients(recipe *cooklang.RecipeV2) {
+	<aside style="flex: 1">
+		<h2>Ingredients</h2>
+		for _, ingredient := range getIngredients(recipe) {
+			<p>{ ingredient }</p>
+		}
+	</aside>
+}
+
+templ recipeInstructions(recipe *cooklang.RecipeV2) {
+	<section style="flex: 3">
+		<h2>Instructions</h2>
+		for _, step := range recipe.Steps {
+			for _, component := range step {
+				@recipeStep(component)
+			}
+		}
+	</section>
+}
+
+templ recipeStep(step any) {
+	switch val := step.(type) {
+		case cooklang.TextV2:
+			<span>{ val.Value }</span>
+			if strings.HasSuffix(val.Value, ".") {
+				<br/>
+				<br/>
+			}
+		case cooklang.IngredientV2:
+			<dfn title={ ingredientAsString(val) }>{ val.Name }</dfn>
+		case cooklang.CookwareV2:
+			<span>{ val.Name }</span>
+		case cooklang.TimerV2:
+			<time datetime={ DurationToISO8601(timerAsDuration(val)) }>
+				{ fmt.Sprintf("%v %s", val.Quantity, val.Unit) }
+			</time>
+	}
 }
