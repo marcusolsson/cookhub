@@ -11,75 +11,71 @@ import (
 	"github.com/marcusolsson/cookhub/views"
 )
 
-func (s *server) pageShowRecipe(w http.ResponseWriter, req *http.Request) {
+// pageShowRecipe renders the page for a specific recipe.
+func (s *server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error {
 	var (
 		org  = chi.URLParam(req, "org")
 		repo = chi.URLParam(req, "repo")
 		slug = fmt.Sprintf("%s/%s", org, repo)
 	)
 
-	relPath := strings.TrimPrefix(
+	filename := strings.TrimPrefix(
 		req.URL.Path,
 		fmt.Sprintf("/github.com/%s/%s", org, repo),
 	)
 
 	ctx := req.Context()
 
-	ctxlog := s.logger.With("slug", slug, "file_path", relPath)
+	ctxlog := s.logger.With("slug", slug, "filename", filename)
 
 	jobID, err := s.db.GetLatestJobBySlug(ctx, slug)
 	if err != nil {
-		ctxlog.Error("Failed to get latest job by slug", "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return fmt.Errorf("failed to get latest job by slug: %w", err)
 	}
 
 	ctxlog = ctxlog.With("job_id", jobID)
 
 	file, err := s.db.GetFileByName(ctx, db.GetFileByNameParams{
 		JobID: jobID,
-		Name:  relPath,
+		Name:  filename,
 	})
 	if err != nil {
-		ctxlog.Error("Failed to get file by name", "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return fmt.Errorf("failed to get file by name: %w", err)
 	}
 
-	cooklangRecipe, err := parseCooklangRecipe(file.Content)
+	recipe, err := parseCooklangRecipe(file.Content)
 	if err != nil {
-		ctxlog.Error("Failed to parse Cooklang recipe", "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return fmt.Errorf("failed to parse Cooklang recipe: %w", err)
 	}
 
-	name := strings.TrimSuffix(filepath.Base(file.Name), filepath.Ext(file.Name))
+	name := strings.TrimSuffix(
+		filepath.Base(file.Name),
+		filepath.Ext(file.Name),
+	)
 
-	views.RecipeView(name, cooklangRecipe).Render(ctx, w)
+	return views.RecipeView(name, recipe).Render(ctx, w)
 }
 
-func (s *server) pageListJobs(w http.ResponseWriter, req *http.Request) {
+// pageListJobs renders the page that lists all jobs.
+func (s *server) pageListJobs(w http.ResponseWriter, req *http.Request) error {
 	ctx := req.Context()
 
 	jobs, err := s.db.GetJobs(ctx)
 	if err != nil {
-		s.logger.Error("Failed to get jobs from database", "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return fmt.Errorf("failed to get jobs from database: %w", err)
 	}
 
-	views.JobsView(jobs).Render(ctx, w)
+	return views.JobsView(jobs).Render(ctx, w)
 }
 
-func (s *server) pageListRecipes(w http.ResponseWriter, req *http.Request) {
+// pageListRecipes renders the page that lists all recipes.
+func (s *server) pageListRecipes(w http.ResponseWriter, req *http.Request) error {
 	ctx := req.Context()
 
 	recipes, err := s.db.GetRecipes(ctx)
 	if err != nil {
-		s.logger.Error("Failed to get recipes from database", "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return fmt.Errorf("failed to get recipes from database: %w", err)
 	}
 
-	views.RecipesView(recipes).Render(ctx, w)
+	return views.RecipesView(recipes).Render(ctx, w)
 }
