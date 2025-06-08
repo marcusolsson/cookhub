@@ -187,3 +187,8 @@ dfn {
   font-weight: 600;
   align-items: center;
 }
+
+#metadata-table {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}

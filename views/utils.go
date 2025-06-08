@@ -261,3 +261,22 @@ func DurationToISO8601(d time.Duration) string {
 
 	return result.String()
 }
+
+func resolveRecipe(base, relative string) string {
+	// Parse the base URL
+	baseURL, err := url.Parse(base)
+	if err != nil {
+		return ""
+	}
+
+	// Parse the relative URL
+	relURL, err := url.Parse(relative)
+	if err != nil {
+		return ""
+	}
+
+	// Use the built-in ResolveReference method
+	resolved := baseURL.ResolveReference(relURL)
+
+	return resolved.String()
+}
