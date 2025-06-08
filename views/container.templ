@@ -10,9 +10,18 @@ templ page() {
 			<link rel="stylesheet" href="/static/styles.css"/>
 		</head>
 		<body>
-			<div class="container">
+			<main class="container">
 				{ children... }
-			</div>
+			</main>
+			<script src="https://unpkg.com/lucide@latest"></script>
+			<script>
+                lucide.createIcons({ 
+                    attrs: { 
+                        class: ['icon'], 
+                        'stroke-width': 1
+                    } 
+                });
+            </script>
 		</body>
 	</html>
 }

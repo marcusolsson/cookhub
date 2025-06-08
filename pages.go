@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/aquilax/cooklang-go"
@@ -30,6 +31,12 @@ func (s *server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error 
 		fullName = fmt.Sprintf("%s/%s", owner, name)
 	)
 
+	u := &url.URL{
+		Scheme: "https",
+		Host:   provider,
+		Path:   fmt.Sprintf("/%s/%s/blob/HEAD/%s", owner, name, filename),
+	}
+
 	fullURL := strings.Join([]string{
 		provider,
 		owner,
@@ -51,6 +58,7 @@ func (s *server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error 
 			vm.author,
 			vm.recipe,
 			vm.fileContent,
+			u.String(),
 		)
 
 		return component.Render(ctx, w)
@@ -95,7 +103,7 @@ func (s *server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error 
 		fileContent: file.Content,
 	}, cache.DefaultExpiration)
 
-	component := views.RecipeView(metadata, author, recipe, file.Content)
+	component := views.RecipeView(metadata, author, recipe, file.Content, u.String())
 
 	return component.Render(ctx, w)
 }

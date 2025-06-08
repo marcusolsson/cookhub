@@ -58,11 +58,12 @@ pre {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 1rem;
 }
 
 .columns {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 4rem;
 }
 
 table {
@@ -78,17 +79,27 @@ td {
 .recipe-header {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
   margin-bottom: 1rem;
 }
 
 h1 {
-  font-size: 2.986rem;
+  font-size: 60px;
+  text-wrap: balance;
+  line-height: 100%;
+  margin-bottom: 24px;
+  font-weight: 500;
 }
 
 h2 {
-  font-size: 2.074rem;
+  font-size: 1.728rem;
+  text-wrap: balance;
+  padding-bottom: 0.5rem;
+  line-height: 1.2;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0;
 }
 
 p {
@@ -98,11 +109,81 @@ p {
 a,
 a:visited,
 a:active {
-  color: #337ab7;
-  text-decoration: none;
+  font-weight: 500;
+  color: rgb(100, 111, 121);
+  text-decoration: underline;
 }
 
 a:hover {
-  color: #23527c;
+  color: #0d0d0d;
   text-decoration: underline;
+}
+
+ul {
+  padding-left: 1.5em;
+}
+
+ul li {
+  margin-bottom: 0.5rem;
+}
+
+ul li::marker {
+  color: #38b000;
+}
+
+#instructions {
+}
+
+#ingredients {
+}
+
+.btn-icon {
+  background-color: #38b000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding: 6px;
+
+  .icon {
+    width: 18px;
+    height: 18px;
+    stroke: #fff;
+  }
+}
+
+.recipe-meta {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.btn-group {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+dfn {
+  font-style: normal;
+  display: inline-block;
+  background-color: rgba(153, 195, 255, 0.3);
+  font-weight: 500;
+  color: #333;
+  border-radius: 4px;
+  padding: 0.1em 0.3em;
+
+  &:hover {
+    background-color: rgba(153, 195, 255, 0.4);
+  }
+}
+
+#servings {
+  font-size: 1.2rem;
+  display: flex;
+  gap: 0.5rem;
+  font-weight: 600;
+  align-items: center;
 }

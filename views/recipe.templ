@@ -13,31 +13,56 @@ templ columns() {
 	</div>
 }
 
-templ RecipeView(meta *RecipeMetadata, author Author, recipe *cooklang.RecipeV2, raw string) {
-	@page() {
-		<main>
-			@recipeHeader(meta, author)
-			@canonicalMetadata(meta)
-			@columns() {
-				@recipeIngredients(recipe)
-				@recipeInstructions(recipe)
-			}
-			<details>
-				<summary>View the raw recipe</summary>
-				<pre>
-					<code>{ raw }</code>
-				</pre>
-			</details>
-		</main>
-	}
+templ RecipeView(meta *RecipeMetadata, author Author, recipe *cooklang.RecipeV2, raw string, canonicalURL string) {
+	<!DOCTYPE html>
+	<html>
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>CookHub</title>
+			<link rel="stylesheet" href="/static/styles.css"/>
+			<link rel="canonical" href={ templ.URL(canonicalURL) }/>
+		</head>
+		<body>
+			<main class="container">
+				@recipeHeader(meta, author, canonicalURL)
+				@canonicalMetadata(meta)
+				@columns() {
+					@recipeInstructions(recipe)
+					@recipeIngredients(recipe, meta.Servings())
+				}
+				<details>
+					<summary>View the raw recipe</summary>
+					<pre>
+						<code>{ raw }</code>
+					</pre>
+				</details>
+			</main>
+			<script src="https://unpkg.com/lucide@latest"></script>
+			<script>
+                lucide.createIcons({ 
+                    attrs: { 
+                        class: ['icon'], 
+                        'stroke-width': 2 
+                    } 
+                });
+            </script>
+		</body>
+	</html>
 }
 
-templ recipeHeader(meta *RecipeMetadata, a Author) {
+templ recipeHeader(meta *RecipeMetadata, a Author, canonicalURL string) {
 	<header class="recipe-header">
 		<h1>{ meta.Title() }</h1>
-		if desc := meta.Description(); desc != "" {
-			<p>{ desc }</p>
-		}
+		<div class="recipe-meta">
+			@author(a)
+			<div class="btn-group">
+				<a class="btn-icon" href={ templ.URL(canonicalURL) }><i data-lucide="github"></i></a>
+				if source := meta.Source(); source != nil {
+					<a class="btn-icon" href={ templ.URL(source.String()) }><i data-lucide="external-link"></i></a>
+				}
+			</div>
+		</div>
 		if len(meta.Tags()) > 0 {
 			<div>
 				for _, t := range meta.Tags() {
@@ -45,10 +70,9 @@ templ recipeHeader(meta *RecipeMetadata, a Author) {
 				}
 			</div>
 		}
-		<section>
-			@author(a)
-			@Link("View on GitHub", a.URL)
-		</section>
+		if desc := meta.Description(); desc != "" {
+			<p>{ desc }</p>
+		}
 		if u := meta.ImageURL(); u != "" {
 			@Image(u)
 		}
@@ -65,9 +89,6 @@ templ author(a Author) {
 templ canonicalMetadata(meta *RecipeMetadata) {
 	<table>
 		<tbody>
-			if servings := meta.Servings(); servings > 0 {
-				<tr><td>Servings</td><td>{ servings }</td></tr>
-			}
 			if cuisine := meta.Cuisine(); cuisine != "" {
 				<tr><td>Cuisine</td><td>{ cuisine }</td></tr>
 			}
@@ -76,16 +97,6 @@ templ canonicalMetadata(meta *RecipeMetadata) {
 			}
 			if category := meta.Category(); category != "" {
 				<tr><td>Category</td><td>{ category }</td></tr>
-			}
-			if source := meta.Source(); source != nil {
-				<tr>
-					<td>Source</td>
-					<td>
-						<a
-							href={ templ.URL(source.String()) }
-						>Link</a>
-					</td>
-				</tr>
 			}
 			if t := meta.TotalTime(); t != "" {
 				<tr><td>Total time</td><td>{ t }</td></tr>
@@ -100,17 +111,26 @@ templ canonicalMetadata(meta *RecipeMetadata) {
 	</table>
 }
 
-templ recipeIngredients(recipe *cooklang.RecipeV2) {
-	<aside style="flex: 1">
-		<h2>Ingredients</h2>
-		for _, ingredient := range getIngredients(recipe) {
-			<p>{ ingredient }</p>
-		}
+templ recipeIngredients(recipe *cooklang.RecipeV2, servings float64) {
+	<aside id="ingredients">
+		<h2>
+			Ingredients
+			if servings > 0 {
+				<div id="servings">
+					<i data-lucide="utensils" style="max-width: 1em; max-height: 1em;"></i>{ servings }
+				</div>
+			}
+		</h2>
+		<ul>
+			for _, ingredient := range getIngredients(recipe) {
+				<li>{ ingredient }</li>
+			}
+		</ul>
 	</aside>
 }
 
 templ recipeInstructions(recipe *cooklang.RecipeV2) {
-	<section style="flex: 3">
+	<section id="instructions">
 		<h2>Instructions</h2>
 		for _, step := range recipe.Steps {
 			for _, component := range step {
