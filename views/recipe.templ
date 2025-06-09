@@ -28,8 +28,8 @@ templ RecipePage(pd *RecipeViewModel) {
 		</head>
 		<body>
 			<main class="container">
-				@recipeHeader(meta, pd.Repo, pd.File)
-				@canonicalMetadata(meta)
+				@recipePageHeader(meta, pd.Repo, pd.File)
+				@recipeMetadata(meta)
 				@Columns() {
 					@recipeInstructions(pd.Recipe, pd.File)
 					@recipeIngredients(pd.Recipe, meta.Servings(), pd.File)
@@ -46,19 +46,7 @@ templ RecipePage(pd *RecipeViewModel) {
 	</html>
 }
 
-templ lucideIcons() {
-	<script src="https://unpkg.com/lucide@latest"></script>
-	<script>
-        lucide.createIcons({ 
-            attrs: { 
-                class: ['icon'], 
-                'stroke-width': 2 
-            } 
-        });
-    </script>
-}
-
-templ recipeHeader(meta *utils.RecipeMetadata, repo github.Repository, fileRef utils.RepoFileRef) {
+templ recipePageHeader(meta *utils.RecipeMetadata, repo github.Repository, fileRef utils.RepoFileRef) {
 	<header class="recipe-header">
 		<h1>{ meta.Title(fileRef.Path) }</h1>
 		<div class="recipe-meta">
@@ -86,7 +74,7 @@ templ recipeHeader(meta *utils.RecipeMetadata, repo github.Repository, fileRef u
 	</header>
 }
 
-templ canonicalMetadata(meta *utils.RecipeMetadata) {
+templ recipeMetadata(meta *utils.RecipeMetadata) {
 	<table id="metadata-table">
 		<tbody>
 			if cuisine := meta.Cuisine(); cuisine != "" {

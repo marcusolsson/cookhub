@@ -71,7 +71,9 @@ func (s *Server) makeRecipeViewModel(
 	}
 
 	var repo github.Repository
-	json.Unmarshal(data.Response, &repo)
+	if err := json.Unmarshal(data.Response, &repo); err != nil {
+		return nil, err
+	}
 
 	recipe, err := parseCooklangRecipe(data.Content)
 	if err != nil {
