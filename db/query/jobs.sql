@@ -59,6 +59,6 @@ SELECT
     f.content,
     rm.response
 FROM files f
-LEFT JOIN
+INNER JOIN
     repo_metadata rm
     ON f.job_id = rm.job_id AND f.job_id = $1 AND f.name = $2;

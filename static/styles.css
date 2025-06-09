@@ -42,9 +42,9 @@ pre {
   display: inline-block;
   background-color: #e0e0e0;
   color: #333;
-  border-radius: 4px;
+  border-radius: 0.5em;
+  font-weight: 500;
   padding: 0.2em 0.5em;
-  margin-right: 0.5em;
   font-size: 0.9em;
 }
 
@@ -152,7 +152,7 @@ ul li::marker {
   }
 }
 
-.recipe-meta {
+.recipe-source {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -191,4 +191,10 @@ dfn {
 #metadata-table {
   margin-top: 1rem;
   margin-bottom: 1rem;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
 }

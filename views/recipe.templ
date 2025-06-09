@@ -29,7 +29,6 @@ templ RecipePage(pd *RecipeViewModel) {
 		<body>
 			<main class="container">
 				@recipePageHeader(meta, pd.Repo, pd.File)
-				@recipeMetadata(meta)
 				@Columns() {
 					@recipeInstructions(pd.Recipe, pd.File)
 					@recipeIngredients(pd.Recipe, meta.Servings(), pd.File)
@@ -49,7 +48,7 @@ templ RecipePage(pd *RecipeViewModel) {
 templ recipePageHeader(meta *utils.RecipeMetadata, repo github.Repository, fileRef utils.RepoFileRef) {
 	<header class="recipe-header">
 		<h1>{ meta.Title(fileRef.Path) }</h1>
-		<div class="recipe-meta">
+		<section class="recipe-source">
 			@Author(repo.Owner.Login, repo.Owner.URL, repo.Owner.AvatarURL)
 			@ButtonGroup() {
 				@IconButton("github", fileRef.URL().String())
@@ -57,46 +56,43 @@ templ recipePageHeader(meta *utils.RecipeMetadata, repo github.Repository, fileR
 					@IconButton("external-link", source.String())
 				}
 			}
-		</div>
+		</section>
 		if len(meta.Tags()) > 0 {
-			<div>
+			@TagList() {
 				for _, t := range meta.Tags() {
 					@Tag(t)
 				}
-			</div>
+			}
+		}
+		@TagList() {
+			if t := meta.TotalTime(); t != "" {
+				<span><strong>Total time:</strong> { t }</span>
+			}
+			if t := meta.PrepTime(); t != "" {
+				<span><strong>Prep time:</strong> { t }</span>
+			}
+			if t := meta.CookTime(); t != "" {
+				<span><strong>Cook time:</strong> { t }</span>
+			}
+		}
+		@TagList() {
+			if value := meta.Cuisine(); value != "" {
+				@Tag(value)
+			}
+			if value := meta.Course(); value != "" {
+				@Tag(value)
+			}
+			if value := meta.Category(); value != "" {
+				@Tag(value)
+			}
 		}
 		if desc := meta.Description(); desc != "" {
-			<p>{ desc }</p>
+			<p class="description">{ desc }</p>
 		}
 		if u := meta.ImageURL(); u != "" {
 			@Image(u)
 		}
 	</header>
-}
-
-templ recipeMetadata(meta *utils.RecipeMetadata) {
-	<table id="metadata-table">
-		<tbody>
-			if cuisine := meta.Cuisine(); cuisine != "" {
-				<tr><td>Cuisine</td><td>{ cuisine }</td></tr>
-			}
-			if course := meta.Course(); course != "" {
-				<tr><td>Course</td><td>{ course }</td></tr>
-			}
-			if category := meta.Category(); category != "" {
-				<tr><td>Category</td><td>{ category }</td></tr>
-			}
-			if t := meta.TotalTime(); t != "" {
-				<tr><td>Total time</td><td>{ t }</td></tr>
-			}
-			if t := meta.PrepTime(); t != "" {
-				<tr><td>Prep time</td><td>{ t }</td></tr>
-			}
-			if t := meta.CookTime(); t != "" {
-				<tr><td>Cook time</td><td>{ t }</td></tr>
-			}
-		</tbody>
-	</table>
 }
 
 templ recipeInstructions(recipe *cooklang.RecipeV2, fileRef utils.RepoFileRef) {
