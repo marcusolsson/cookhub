@@ -4,86 +4,73 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
-	"strings"
 
 	"github.com/aquilax/cooklang-go"
 	"github.com/go-chi/chi/v5"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
+	"github.com/marcusolsson/cookhub/github"
+	"github.com/marcusolsson/cookhub/utils"
 	"github.com/marcusolsson/cookhub/views"
 	"github.com/patrickmn/go-cache"
 )
 
 type recipeViewModel struct {
-	metadata    *views.RecipeMetadata
-	author      views.Author
+	metadata    *utils.RecipeMetadata
+	ghRepo      github.Repository
 	recipe      *cooklang.RecipeV2
 	fileContent string
 }
 
 // pageShowRecipe renders the page for a specific recipe.
-func (s *server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error {
-	var (
-		provider = chi.URLParam(req, "provider")
-		owner    = chi.URLParam(req, "owner")
-		name     = chi.URLParam(req, "name")
-		filename = chi.URLParam(req, "*")
-		fullName = fmt.Sprintf("%s/%s", owner, name)
-	)
-
-	u := &url.URL{
-		Scheme: "https",
-		Host:   provider,
-		Path:   fmt.Sprintf("/%s/%s/blob/HEAD/%s", owner, name, filename),
+func (s *Server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error {
+	repoRef := utils.RepoRef{
+		Provider: chi.URLParam(req, "provider"),
+		Owner:    chi.URLParam(req, "owner"),
+		Name:     chi.URLParam(req, "name"),
 	}
 
-	fullURL := strings.Join([]string{
-		provider,
-		owner,
-		name,
-		filename,
-	},
-		"/",
-	)
+	fileRef := utils.RepoFileRef{
+		Repo: repoRef,
+		Path: chi.URLParam(req, "*"),
+		Ref:  "HEAD",
+	}
 
 	ctx := req.Context()
 
-	ctxlog := s.logger.With("slug", fullName, "filename", filename)
+	ctxlog := s.logger.With("file", fileRef.ID())
 
-	if item, found := s.c.Get(fullURL); found {
+	if item, found := s.c.Get(fileRef.ID()); found {
 		vm := item.(recipeViewModel)
 
 		component := views.RecipeView(
 			vm.metadata,
-			vm.author,
+			vm.ghRepo,
 			vm.recipe,
 			vm.fileContent,
-			u.String(),
+			fileRef,
 		)
 
 		return component.Render(ctx, w)
 	}
 
-	filename = "/" + filename
-
-	jobID, err := s.db.GetLatestJobBySlug(ctx, fullName)
+	jobID, err := s.db.GetLatestJobBySlug(ctx, repoRef.Slug())
 	if err != nil {
 		return fmt.Errorf("failed to get latest job by slug: %w", err)
 	}
 
 	ctxlog = ctxlog.With("job_id", jobID)
 
-	repo, err := s.db.GetRepoMetadataByJob(ctx, jobID)
+	repoMetadata, err := s.db.GetRepoMetadataByJob(ctx, jobID)
 	if err != nil {
 		return fmt.Errorf("failed to get repo metadata: %w", err)
 	}
 
-	var author views.Author
-	json.Unmarshal(repo.Response, &author)
+	var repo github.Repository
+	json.Unmarshal(repoMetadata.Response, &repo)
 
 	file, err := s.db.GetFileByName(ctx, db.GetFileByNameParams{
 		JobID: jobID,
-		Name:  filename,
+		Name:  fileRef.Path,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to get file by name: %w", err)
@@ -94,22 +81,22 @@ func (s *server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error 
 		return fmt.Errorf("failed to parse Cooklang recipe: %w", err)
 	}
 
-	metadata := views.ParseCanonicalMetadata(recipe, file)
+	metadata := utils.ParseCanonicalMetadata(recipe, file.Name)
 
-	s.c.Set(fullURL, recipeViewModel{
+	s.c.Set(fileRef.ID(), recipeViewModel{
 		metadata:    metadata,
-		author:      author,
+		ghRepo:      repo,
 		recipe:      recipe,
 		fileContent: file.Content,
 	}, cache.DefaultExpiration)
 
-	component := views.RecipeView(metadata, author, recipe, file.Content, u.String())
+	component := views.RecipeView(metadata, repo, recipe, file.Content, fileRef)
 
 	return component.Render(ctx, w)
 }
 
 // pageListJobs renders the page that lists all jobs.
-func (s *server) pageListJobs(w http.ResponseWriter, req *http.Request) error {
+func (s *Server) pageListJobs(w http.ResponseWriter, req *http.Request) error {
 	ctx := req.Context()
 
 	jobs, err := s.db.GetJobs(ctx)
@@ -121,7 +108,7 @@ func (s *server) pageListJobs(w http.ResponseWriter, req *http.Request) error {
 }
 
 // pageListRecipes renders the page that lists all recipes.
-func (s *server) pageListRecipes(w http.ResponseWriter, req *http.Request) error {
+func (s *Server) pageListRecipes(w http.ResponseWriter, req *http.Request) error {
 	ctx := req.Context()
 
 	recipes, err := s.db.GetRecipes(ctx)

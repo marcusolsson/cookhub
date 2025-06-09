@@ -9,9 +9,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
+	"github.com/marcusolsson/cookhub/utils"
 )
 
-func (s *server) apiIndexRepo(w http.ResponseWriter, req *http.Request) {
+func (s *Server) apiIndexRepo(w http.ResponseWriter, req *http.Request) {
 	var (
 		provider = chi.URLParam(req, "provider")
 		owner    = chi.URLParam(req, "owner")
@@ -19,9 +20,19 @@ func (s *server) apiIndexRepo(w http.ResponseWriter, req *http.Request) {
 		fullName = fmt.Sprintf("%s/%s", owner, name)
 	)
 
+	repoRef := utils.RepoRef{
+		Provider: chi.URLParam(req, "provider"),
+		Owner:    chi.URLParam(req, "owner"),
+		Name:     chi.URLParam(req, "name"),
+	}
+
 	ctx := req.Context()
 
-	ctxlog := s.logger.With("provider", provider, "owner", owner, "name", name)
+	ctxlog := s.logger.With(
+		"provider", repoRef.Provider,
+		"owner", repoRef.Owner,
+		"name", repoRef.Name,
+	)
 
 	_, body, err := s.ghClient.GetRepository(ctx, owner, name)
 	if err != nil {
@@ -110,7 +121,7 @@ func (s *server) apiIndexRepo(w http.ResponseWriter, req *http.Request) {
 	ctxlog.Info("Started indexing repository")
 }
 
-func (s *server) ingestRepoMetadata(
+func (s *Server) ingestRepoMetadata(
 	ctx context.Context,
 	qs *db.Queries,
 	jobID, provider, owner, name string,
@@ -125,7 +136,7 @@ func (s *server) ingestRepoMetadata(
 	})
 }
 
-func (s *server) ingestFiles(
+func (s *Server) ingestFiles(
 	ctx context.Context,
 	qs *db.Queries,
 	jobID, slug, sha string,
@@ -160,36 +171,4 @@ func (s *server) ingestFiles(
 	}
 
 	return len(params), nil
-}
-
-func (s *server) apiListMetadata(w http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-
-	files, err := s.db.GetAllFiles(ctx)
-	if err != nil {
-		s.logger.Error("Failed to get files from database", "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	fields := map[string]int{}
-
-	for _, file := range files {
-		recipe, err := parseCooklangRecipe(file.Content)
-		if err != nil {
-			continue
-		}
-
-		for key := range recipe.Metadata {
-			if _, ok := fields[key]; !ok {
-				fields[key] = 0
-			}
-
-			fields[key]++
-		}
-	}
-
-	for key, count := range fields {
-		s.logger.Info(key, "count", count)
-	}
 }

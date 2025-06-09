@@ -55,7 +55,7 @@ func RecipesView(recipes []db.GetRecipesRow) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var3 templ.SafeURL = templ.URL("/github.com/" + recipe.Slug + recipe.Name)
+				var templ_7745c5c3_Var3 templ.SafeURL = templ.URL("/github.com/" + recipe.Slug + "/" + recipe.Name)
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var3)))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -67,7 +67,7 @@ func RecipesView(recipes []db.GetRecipesRow) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(recipe.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/recipes.templ`, Line: 21, Col: 89}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/recipes.templ`, Line: 21, Col: 95}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {

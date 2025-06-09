@@ -13,18 +13,28 @@ import (
 	"strings"
 )
 
-func downloadZipBall(ctx context.Context, repoSlug, commitSHA, folderPath string) (string, error) {
+// downloadZipBall downloads a zip archive of a specific commit from a GitHub
+// repository. The archive is saved to the specified directory and the path to
+// the zip file is returned.
+func downloadZipBall(ctx context.Context, repoSlug, commitSHA, dirPath string) (string, error) {
 	u := fmt.Sprintf("https://github.com/%s/zipball/%s", repoSlug, commitSHA)
 
-	resp, err := http.Get(u)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+	if err != nil {
+		return "", err
+	}
+
+	var client http.Client
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
 
-	dispo := resp.Header.Get("Content-Disposition")
+	disposition := resp.Header.Get("Content-Disposition")
 
-	mediaType, params, err := mime.ParseMediaType(dispo)
+	mediaType, params, err := mime.ParseMediaType(disposition)
 	if err != nil {
 		return "", err
 	}
@@ -33,7 +43,7 @@ func downloadZipBall(ctx context.Context, repoSlug, commitSHA, folderPath string
 		return "", fmt.Errorf("unexpected media type: %s", mediaType)
 	}
 
-	zipPath := filepath.Join(folderPath, params["filename"])
+	zipPath := filepath.Join(dirPath, params["filename"])
 
 	f, err := os.Create(zipPath)
 	if err != nil {
@@ -64,6 +74,7 @@ type File struct {
 	Content []byte
 }
 
+// readFilesFromZip reads .cook files from a zip archive and yields them one by one.
 func readFilesFromZip(zipPath string) iter.Seq2[*File, error] {
 	return func(yield func(*File, error) bool) {
 		reader, err := zip.OpenReader(zipPath)
@@ -86,7 +97,7 @@ func readFilesFromZip(zipPath string) iter.Seq2[*File, error] {
 					}
 
 					archiveName := strings.TrimSuffix(filepath.Base(zipPath), filepath.Ext(zipPath))
-					relPath := strings.TrimPrefix(file.Name, archiveName)
+					relPath := strings.TrimPrefix(file.Name, archiveName+"/")
 
 					if !yield(&File{
 						Name:    relPath,

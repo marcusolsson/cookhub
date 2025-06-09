@@ -16,3 +16,7 @@ templ Image(src string) {
 templ Link(label, href string) {
 	<a href={ templ.URL(href) }>{ label }</a>
 }
+
+templ Icon(name string) {
+	<i data-lucide={ name }></i>
+}

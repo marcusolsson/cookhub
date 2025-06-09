@@ -4,6 +4,7 @@ import (
 	"github.com/caarlos0/env/v11"
 )
 
+// Config holds the configuration for the application.
 type Config struct {
 	Env  string `env:"ENV"  envDefault:"development"`
 	Port string `env:"PORT" envDefault:"8080"`

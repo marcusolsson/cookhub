@@ -11,7 +11,7 @@ import (
 	"github.com/patrickmn/go-cache"
 )
 
-type server struct {
+type Server struct {
 	pool     *pgxpool.Pool
 	logger   *slog.Logger
 	ghClient *GitHubClient
@@ -19,44 +19,39 @@ type server struct {
 	c        *cache.Cache
 }
 
-func newServer(
-	pool *pgxpool.Pool,
-	ghClient *GitHubClient,
-	logger *slog.Logger,
-	c *cache.Cache,
-) chi.Router {
-	srv := &server{
-		pool:     pool,
-		logger:   logger,
-		ghClient: ghClient,
-		db:       db.New(pool),
-		c:        c,
-	}
-
+// Router returns a new chi router with the server's routes configured.
+func (srv *Server) Router() chi.Router {
 	r := chi.NewRouter()
-	r.Get("/{provider}/{owner}/{name}/*", srv.handleError(srv.pageShowRecipe))
-	r.Get("/jobs", srv.handleError(srv.pageListJobs))
-	r.Get("/recipes", srv.handleError(srv.pageListRecipes))
 
+	h := errorHandler(srv.logger)
+
+	r.Get("/{provider}/{owner}/{name}/*", h(srv.pageShowRecipe))
+	r.Get("/jobs", h(srv.pageListJobs))
+	r.Get("/recipes", h(srv.pageListRecipes))
+
+	// API routes handle admin operations.
 	r.Route("/api", func(r chi.Router) {
 		r.Post("/{provider}/{owner}/{name}", srv.apiIndexRepo)
-		r.Get("/metadata", srv.apiListMetadata)
 	})
 
+	// Serve all files in the "/static" directory.
 	r.Handle("/static/*", http.StripPrefix("/static/", StaticFileServer))
 
 	return r
 }
 
-func (s *server) handleError(
-	handler func(w http.ResponseWriter, req *http.Request) error,
-) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		if err := handler(w, req); err != nil {
-			s.logger.Error(err.Error())
+// errorHandler is an adapter to allow handlers to return errors,
+type errHandlerFunc func(w http.ResponseWriter, req *http.Request) error
 
-			if err := views.ErrorPage().Render(req.Context(), w); err != nil {
-				s.logger.Error(err.Error())
+// errorHandler is a middleware that wraps an error handler function.
+func errorHandler(logger *slog.Logger) func(errHandlerFunc) http.HandlerFunc {
+	return func(handler errHandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, req *http.Request) {
+			if err := handler(w, req); err != nil {
+				logger.Error(err.Error())
+				if err := views.ErrorPage().Render(req.Context(), w); err != nil {
+					logger.Error(err.Error())
+				}
 			}
 		}
 	}

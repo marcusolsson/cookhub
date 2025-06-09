@@ -1,4 +1,4 @@
-package views
+package utils
 
 import (
 	"cmp"
@@ -10,29 +10,16 @@ import (
 	"time"
 
 	"github.com/aquilax/cooklang-go"
-	db "github.com/marcusolsson/cookhub/db/sqlc"
 )
 
-type Author struct {
-	Name     string `json:"name"`
-	FullName string `json:"full_name"`
-	Owner    struct {
-		Login     string `json:"login"`
-		URL       string `json:"html_url"`
-		AvatarURL string `json:"avatar_url"`
-	} `json:"owner"`
-	URL         string `json:"html_url"`
-	Description string `json:"description"`
-}
-
 type RecipeMetadata struct {
-	File   db.GetFileByNameRow
 	Recipe *cooklang.RecipeV2
 
 	normalized map[string]any
+	filename   string
 }
 
-func ParseCanonicalMetadata(recipe *cooklang.RecipeV2, file db.GetFileByNameRow) *RecipeMetadata {
+func ParseCanonicalMetadata(recipe *cooklang.RecipeV2, filename string) *RecipeMetadata {
 	normalized := make(map[string]any)
 
 	for key, value := range recipe.Metadata {
@@ -40,9 +27,9 @@ func ParseCanonicalMetadata(recipe *cooklang.RecipeV2, file db.GetFileByNameRow)
 	}
 
 	return &RecipeMetadata{
-		File:       file,
 		Recipe:     recipe,
 		normalized: normalized,
+		filename:   filename,
 	}
 }
 
@@ -51,8 +38,8 @@ func (rm RecipeMetadata) Title() string {
 		rm.getStringProperty("title"),
 		rm.getStringProperty("name"),
 		strings.TrimSuffix(
-			filepath.Base(rm.File.Name),
-			filepath.Ext(rm.File.Name),
+			filepath.Base(rm.filename),
+			filepath.Ext(rm.filename),
 		),
 	)
 }
@@ -178,42 +165,7 @@ func (rm *RecipeMetadata) getNumericProperty(name string) float64 {
 	return 0.0
 }
 
-func getCategory(recipe *cooklang.RecipeV2) string {
-	if category, ok := recipe.Metadata["course"].(string); ok {
-		return category
-	}
-	return ""
-}
-
-func getRecipeYield(recipe *cooklang.RecipeV2) string {
-	if servings, ok := recipe.Metadata["servings"].(string); ok {
-		return servings
-	}
-	return ""
-}
-
-func getIngredients(recipe *cooklang.RecipeV2) []string {
-	var res []string
-
-	for _, section := range recipe.Steps {
-		for _, step := range section {
-			switch val := step.(type) {
-			case cooklang.IngredientV2:
-				switch {
-				case val.Units == "" && val.Quantity == 0:
-					res = append(res, val.Name)
-				case val.Units == "":
-					res = append(res, fmt.Sprintf("%v %s", val.Quantity, val.Name))
-				default:
-					res = append(res, fmt.Sprintf("%v %s %s", val.Quantity, val.Units, val.Name))
-				}
-			}
-		}
-	}
-	return res
-}
-
-func ingredientAsString(ingredient cooklang.IngredientV2) string {
+func IngredientAsString(ingredient cooklang.IngredientV2) string {
 	switch {
 	case ingredient.Units == "" && ingredient.Quantity == 0:
 		return ingredient.Name
@@ -224,7 +176,7 @@ func ingredientAsString(ingredient cooklang.IngredientV2) string {
 	}
 }
 
-func timerAsDuration(timer cooklang.TimerV2) time.Duration {
+func TimerAsDuration(timer cooklang.TimerV2) time.Duration {
 	switch timer.Unit {
 	case "s", "sec", "second", "seconds":
 		return time.Duration(timer.Quantity) * time.Second
@@ -262,7 +214,7 @@ func DurationToISO8601(d time.Duration) string {
 	return result.String()
 }
 
-func resolveRecipe(base, relative string) string {
+func ResolveRecipe(base, relative string) string {
 	// Parse the base URL
 	baseURL, err := url.Parse(base)
 	if err != nil {

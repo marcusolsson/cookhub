@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/aquilax/cooklang-go"
+	"github.com/marcusolsson/cookhub/utils"
+	"github.com/marcusolsson/cookhub/github"
 )
 
 templ columns() {
@@ -13,7 +15,7 @@ templ columns() {
 	</div>
 }
 
-templ RecipeView(meta *RecipeMetadata, author Author, recipe *cooklang.RecipeV2, raw string, canonicalURL string) {
+templ RecipeView(meta *utils.RecipeMetadata, author github.Repository, recipe *cooklang.RecipeV2, raw string, fileRef utils.RepoFileRef) {
 	<!DOCTYPE html>
 	<html>
 		<head>
@@ -21,15 +23,15 @@ templ RecipeView(meta *RecipeMetadata, author Author, recipe *cooklang.RecipeV2,
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>CookHub</title>
 			<link rel="stylesheet" href="/static/styles.css"/>
-			<link rel="canonical" href={ templ.URL(canonicalURL) }/>
+			<link rel="canonical" href={ templ.URL(fileRef.URL().String()) }/>
 		</head>
 		<body>
 			<main class="container">
-				@recipeHeader(meta, author, canonicalURL)
+				@recipeHeader(meta, author, fileRef)
 				@canonicalMetadata(meta)
 				@columns() {
-					@recipeInstructions(recipe, author, meta)
-					@recipeIngredients(recipe, author, meta)
+					@recipeInstructions(recipe, fileRef)
+					@recipeIngredients(recipe, author, meta, fileRef)
 				}
 				<details>
 					<summary>View the raw recipe</summary>
@@ -51,15 +53,19 @@ templ RecipeView(meta *RecipeMetadata, author Author, recipe *cooklang.RecipeV2,
 	</html>
 }
 
-templ recipeHeader(meta *RecipeMetadata, a Author, canonicalURL string) {
+templ recipeHeader(meta *utils.RecipeMetadata, a github.Repository, fileRef utils.RepoFileRef) {
 	<header class="recipe-header">
 		<h1>{ meta.Title() }</h1>
 		<div class="recipe-meta">
-			@author(a)
+			@author(a.Owner.Login, a.Owner.URL, a.Owner.AvatarURL)
 			<div class="btn-group">
-				<a class="btn-icon" href={ templ.URL(canonicalURL) }><i data-lucide="github"></i></a>
+				<a class="btn-icon" href={ templ.URL(fileRef.URL().String()) }>
+					@Icon("github")
+				</a>
 				if source := meta.Source(); source != nil {
-					<a class="btn-icon" href={ templ.URL(source.String()) }><i data-lucide="external-link"></i></a>
+					<a class="btn-icon" href={ templ.URL(source.String()) }>
+						@Icon("external-link")
+					</a>
 				}
 			</div>
 		</div>
@@ -79,14 +85,14 @@ templ recipeHeader(meta *RecipeMetadata, a Author, canonicalURL string) {
 	</header>
 }
 
-templ author(a Author) {
+templ author(authorName, authorURL, avatarURL string) {
 	<div class="author">
-		@Avatar(a.Owner.AvatarURL)
-		@Link(a.Owner.Login, a.Owner.URL)
+		@Avatar(avatarURL)
+		@Link(authorName, authorURL)
 	</div>
 }
 
-templ canonicalMetadata(meta *RecipeMetadata) {
+templ canonicalMetadata(meta *utils.RecipeMetadata) {
 	<table id="metadata-table">
 		<tbody>
 			if cuisine := meta.Cuisine(); cuisine != "" {
@@ -111,80 +117,107 @@ templ canonicalMetadata(meta *RecipeMetadata) {
 	</table>
 }
 
-templ recipeIngredients(recipe *cooklang.RecipeV2, author Author, meta *RecipeMetadata) {
+templ recipeIngredients(recipe *cooklang.RecipeV2, author github.Repository, meta *utils.RecipeMetadata, fileRef utils.RepoFileRef) {
 	<aside id="ingredients">
 		<h2>
 			Ingredients
 			if servings := meta.Servings(); servings > 0 {
-				<div id="servings">
-					<i data-lucide="utensils" style="max-width: 1em; max-height: 1em;"></i>{ servings }
-				</div>
+				@servingsLabel(servings)
 			}
 		</h2>
-		<ul>
-			for _, section := range recipe.Steps {
-				for _, step := range section {
-					switch val := step.(type) {
-						case cooklang.IngredientV2:
-							<li>
-								switch  {
-									case val.Units == "" && val.Quantity == 0:
-										@ingredient(val.Name, author, meta)
-									case val.Units == "":
-										{ fmt.Sprintf("%v ", val.Quantity) }
-										@ingredient(val.Name, author, meta)
-									default:
-										{ fmt.Sprintf("%v %s ", val.Quantity, val.Units) }
-										@ingredient(val.Name, author, meta)
-								}
-							</li>
-					}
-				}
-			}
-		</ul>
+		@cooklangIngredientList(recipe.Steps, fileRef)
 	</aside>
 }
 
-templ ingredient(name string, author Author, meta *RecipeMetadata) {
-	if strings.HasPrefix(name, "./") {
-		<a href={ templ.URL(resolveRecipe("/github.com/"+author.FullName+meta.File.Name, name+".cook")) }>
-			{ strings.TrimPrefix(name, "./") }
-		</a>
-	} else {
-		{ name }
-	}
+templ servingsLabel(servings float64) {
+	<div id="servings">
+		<i data-lucide="utensils" style="max-width: 1em; max-height: 1em;"></i>{ servings }
+	</div>
 }
 
-templ recipeInstructions(recipe *cooklang.RecipeV2, author Author, meta *RecipeMetadata) {
+templ cooklangIngredientList(steps []cooklang.StepV2, fileRef utils.RepoFileRef) {
+	<ul>
+		for _, section := range steps {
+			for _, step := range section {
+				switch val := step.(type) {
+					case cooklang.IngredientV2:
+						@cooklangIngredientListItem(val, fileRef)
+				}
+			}
+		}
+	</ul>
+}
+
+templ cooklangIngredientListItem(val cooklang.IngredientV2, fileRef utils.RepoFileRef) {
+	<li>
+		switch  {
+			case val.Units == "" && val.Quantity == 0:
+				@cooklangIngredientText(val.Name, fileRef)
+			case val.Units == "":
+				{ fmt.Sprintf("%v ", val.Quantity) }
+				@cooklangIngredientText(val.Name, fileRef)
+			default:
+				{ fmt.Sprintf("%v %s ", val.Quantity, val.Units) }
+				@cooklangIngredientText(val.Name, fileRef)
+		}
+	</li>
+}
+
+templ recipeInstructions(recipe *cooklang.RecipeV2, fileRef utils.RepoFileRef) {
 	<section id="instructions">
 		<h2>Instructions</h2>
 		for _, step := range recipe.Steps {
 			for _, component := range step {
-				@recipeStep(component, author, meta)
+				@cooklangStep(component, fileRef)
 			}
 		}
 	</section>
 }
 
-templ recipeStep(step any, author Author, meta *RecipeMetadata) {
+templ cooklangStep(step any, fileRef utils.RepoFileRef) {
 	switch val := step.(type) {
 		case cooklang.TextV2:
-			<span>{ val.Value }</span>
-			if strings.HasSuffix(val.Value, ".") {
-				<br/>
-				<br/>
-			}
+			@cooklangText(val)
 		case cooklang.IngredientV2:
-			if strings.HasPrefix(val.Name, "./") {
-				<a href={ templ.URL(resolveRecipe("/github.com/"+author.FullName+meta.File.Name, val.Name+".cook")) }>{ strings.TrimPrefix(val.Name, "./") }</a>
-			} else {
-				<dfn title={ ingredientAsString(val) }>{ val.Name }</dfn>
-			}
+			@cooklangIngredient(val, fileRef)
 		case cooklang.CookwareV2:
-			<span>{ val.Name }</span>
+			@cooklangCookware(val)
 		case cooklang.TimerV2:
-			<time datetime={ DurationToISO8601(timerAsDuration(val)) }>
-				{ fmt.Sprintf("%v %s", val.Quantity, val.Unit) }
-			</time>
+			@cooklangTimer(val)
 	}
+}
+
+templ cooklangText(val cooklang.TextV2) {
+	<span>{ val.Value }</span>
+	if strings.HasSuffix(val.Value, ".") {
+		<br/>
+		<br/>
+	}
+}
+
+templ cooklangIngredient(val cooklang.IngredientV2, fileRef utils.RepoFileRef) {
+	if strings.HasPrefix(val.Name, "./") {
+		<a href={ templ.URL(utils.ResolveRecipe("/"+fileRef.ID(), val.Name+".cook")) }>{ strings.TrimPrefix(val.Name, "./") }</a>
+	} else {
+		<dfn title={ utils.IngredientAsString(val) }>{ val.Name }</dfn>
+	}
+}
+
+templ cooklangIngredientText(name string, fileRef utils.RepoFileRef) {
+	if strings.HasPrefix(name, "./") {
+		<a href={ templ.URL(utils.ResolveRecipe("/"+fileRef.ID(), name+".cook")) }>{ strings.TrimPrefix(name, "./") } </a>
+	} else {
+		{ name }
+	}
+}
+
+templ cooklangCookware(cookware cooklang.CookwareV2) {
+	<span>{ cookware.Name }</span>
+}
+
+templ cooklangTimer(timer cooklang.TimerV2) {
+	{{ d := utils.TimerAsDuration(timer) }}
+	<time datetime={ utils.DurationToISO8601(d) }>
+		{ children... }
+	</time>
 }

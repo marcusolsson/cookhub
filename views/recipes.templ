@@ -18,7 +18,7 @@ templ RecipesView(recipes []db.GetRecipesRow) {
 			<tbody>
 				for _, recipe := range recipes {
 					<tr>
-						<td><a href={ templ.URL("/github.com/" + recipe.Slug + recipe.Name) }>{ recipe.Name }</a></td>
+						<td><a href={ templ.URL("/github.com/" + recipe.Slug + "/" + recipe.Name) }>{ recipe.Name }</a></td>
 						<td>{ recipe.CreatedAt.Time.Format(time.RFC3339) } </td>
 					</tr>
 				}
