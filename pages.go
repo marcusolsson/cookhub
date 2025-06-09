@@ -33,7 +33,6 @@ func (s *Server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error 
 
 	ctxlog := s.logger.With("file", fileRef.ID())
 
-	// Check if the recipe page has been cached.
 	if item, found := s.c.Get(fileRef.ID()); found {
 		return item.(templ.Component).Render(ctx, w)
 	}
@@ -57,6 +56,7 @@ func (s *Server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error 
 	return page.Render(ctx, w)
 }
 
+// makeRecipeViewModel constructs the view model for a recipe page.
 func (s *Server) makeRecipeViewModel(
 	ctx context.Context,
 	jobID string,

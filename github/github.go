@@ -1,4 +1,4 @@
-package main
+package github
 
 import (
 	"context"
@@ -21,13 +21,13 @@ func (e ErrRateLimit) Error() string {
 	return fmt.Sprintf("rate limit exceeded")
 }
 
-type GitHubClient struct {
+type Client struct {
 	httpClient *http.Client
 	apiToken   string
 }
 
-func newGitHubClient(apiToken string) *GitHubClient {
-	return &GitHubClient{
+func NewClient(apiToken string) *Client {
+	return &Client{
 		httpClient: &http.Client{},
 		apiToken:   apiToken,
 	}
@@ -38,10 +38,11 @@ type Repository struct {
 	Name     string `json:"name"`
 	FullName string `json:"full_name"`
 	Owner    struct {
-		Login string `json:"login"`
-		ID    int    `json:"id"`
-		URL   string `json:"html_url"`
-	}
+		ID        int    `json:"id"`
+		Login     string `json:"login"`
+		URL       string `json:"html_url"`
+		AvatarURL string `json:"avatar_url"`
+	} `json:"owner"`
 	URL           string `json:"html_url"`
 	Description   string `json:"description"`
 	DefaultBranch string `json:"default_branch"`
@@ -62,7 +63,7 @@ func newErrRateLimit(header http.Header) ErrRateLimit {
 	}
 }
 
-func (c *GitHubClient) GetRepository(
+func (c *Client) GetRepository(
 	ctx context.Context,
 	owner, name string,
 ) (*Repository, []byte, error) {
@@ -100,7 +101,7 @@ func (c *GitHubClient) GetRepository(
 	return &repo, b, nil
 }
 
-func (c *GitHubClient) GetLatestCommitSHA(
+func (c *Client) GetLatestCommitSHA(
 	ctx context.Context,
 	owner, name, branch string,
 ) (string, error) {

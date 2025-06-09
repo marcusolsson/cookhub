@@ -11,6 +11,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
+	"github.com/marcusolsson/cookhub/github"
 	"github.com/patrickmn/go-cache"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -38,11 +39,11 @@ func main() {
 	logger.Info("Successfully connected to the database")
 
 	s := &Server{
-		pool:     pool,
-		logger:   logger,
-		ghClient: newGitHubClient(cfg.GitHub.Token),
-		db:       db.New(pool),
-		c:        cache.New(cache.NoExpiration, cache.NoExpiration),
+		pool:   pool,
+		logger: logger,
+		gh:     github.NewClient(cfg.GitHub.Token),
+		db:     db.New(pool),
+		c:      cache.New(cache.NoExpiration, cache.NoExpiration),
 	}
 
 	srv := http.Server{

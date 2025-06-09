@@ -7,16 +7,17 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
+	"github.com/marcusolsson/cookhub/github"
 	"github.com/marcusolsson/cookhub/views"
 	"github.com/patrickmn/go-cache"
 )
 
 type Server struct {
-	pool     *pgxpool.Pool
-	logger   *slog.Logger
-	ghClient *GitHubClient
-	db       *db.Queries
-	c        *cache.Cache
+	pool   *pgxpool.Pool
+	logger *slog.Logger
+	gh     *github.Client
+	db     *db.Queries
+	c      *cache.Cache
 }
 
 // Router returns a new chi router with the server's routes configured.

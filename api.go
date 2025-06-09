@@ -34,14 +34,14 @@ func (s *Server) apiIndexRepo(w http.ResponseWriter, req *http.Request) {
 		"name", repoRef.Name,
 	)
 
-	_, body, err := s.ghClient.GetRepository(ctx, owner, name)
+	_, body, err := s.gh.GetRepository(ctx, owner, name)
 	if err != nil {
 		ctxlog.Error("Failed to get metadata for repository", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	sha, err := s.ghClient.GetLatestCommitSHA(ctx, owner, name, "HEAD")
+	sha, err := s.gh.GetLatestCommitSHA(ctx, owner, name, "HEAD")
 	if err != nil {
 		ctxlog.Error("Failed to get latest commit SHA from repo", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
