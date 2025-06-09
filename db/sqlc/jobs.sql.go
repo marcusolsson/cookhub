@@ -193,6 +193,33 @@ func (q *Queries) GetLatestJobBySlug(ctx context.Context, slug string) (string, 
 	return id, err
 }
 
+const getRecipePageData = `-- name: GetRecipePageData :one
+SELECT
+    f.content,
+    rm.response
+FROM files f
+LEFT JOIN
+    repo_metadata rm
+    ON f.job_id = rm.job_id AND f.job_id = $1 AND f.name = $2
+`
+
+type GetRecipePageDataParams struct {
+	JobID string
+	Name  string
+}
+
+type GetRecipePageDataRow struct {
+	Content  string
+	Response []byte
+}
+
+func (q *Queries) GetRecipePageData(ctx context.Context, arg GetRecipePageDataParams) (GetRecipePageDataRow, error) {
+	row := q.db.QueryRow(ctx, getRecipePageData, arg.JobID, arg.Name)
+	var i GetRecipePageDataRow
+	err := row.Scan(&i.Content, &i.Response)
+	return i, err
+}
+
 const getRecipes = `-- name: GetRecipes :many
 SELECT
     f.created_at,

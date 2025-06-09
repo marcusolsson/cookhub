@@ -16,10 +16,9 @@ type RecipeMetadata struct {
 	Recipe *cooklang.RecipeV2
 
 	normalized map[string]any
-	filename   string
 }
 
-func ParseCanonicalMetadata(recipe *cooklang.RecipeV2, filename string) *RecipeMetadata {
+func ParseCanonicalMetadata(recipe *cooklang.RecipeV2) *RecipeMetadata {
 	normalized := make(map[string]any)
 
 	for key, value := range recipe.Metadata {
@@ -29,17 +28,16 @@ func ParseCanonicalMetadata(recipe *cooklang.RecipeV2, filename string) *RecipeM
 	return &RecipeMetadata{
 		Recipe:     recipe,
 		normalized: normalized,
-		filename:   filename,
 	}
 }
 
-func (rm RecipeMetadata) Title() string {
+func (rm RecipeMetadata) Title(path string) string {
 	return cmp.Or(
 		rm.getStringProperty("title"),
 		rm.getStringProperty("name"),
 		strings.TrimSuffix(
-			filepath.Base(rm.filename),
-			filepath.Ext(rm.filename),
+			filepath.Base(path),
+			filepath.Ext(path),
 		),
 	)
 }

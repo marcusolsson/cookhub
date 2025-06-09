@@ -1,11 +1,12 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
-	"github.com/aquilax/cooklang-go"
+	"github.com/a-h/templ"
 	"github.com/go-chi/chi/v5"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
 	"github.com/marcusolsson/cookhub/github"
@@ -13,13 +14,6 @@ import (
 	"github.com/marcusolsson/cookhub/views"
 	"github.com/patrickmn/go-cache"
 )
-
-type recipeViewModel struct {
-	metadata    *utils.RecipeMetadata
-	ghRepo      github.Repository
-	recipe      *cooklang.RecipeV2
-	fileContent string
-}
 
 // pageShowRecipe renders the page for a specific recipe.
 func (s *Server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error {
@@ -39,18 +33,9 @@ func (s *Server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error 
 
 	ctxlog := s.logger.With("file", fileRef.ID())
 
+	// Check if the recipe page has been cached.
 	if item, found := s.c.Get(fileRef.ID()); found {
-		vm := item.(recipeViewModel)
-
-		component := views.RecipeView(
-			vm.metadata,
-			vm.ghRepo,
-			vm.recipe,
-			vm.fileContent,
-			fileRef,
-		)
-
-		return component.Render(ctx, w)
+		return item.(templ.Component).Render(ctx, w)
 	}
 
 	jobID, err := s.db.GetLatestJobBySlug(ctx, repoRef.Slug())
@@ -60,51 +45,45 @@ func (s *Server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error 
 
 	ctxlog = ctxlog.With("job_id", jobID)
 
-	repoMetadata, err := s.db.GetRepoMetadataByJob(ctx, jobID)
+	model, err := s.makeRecipeViewModel(ctx, jobID, fileRef)
 	if err != nil {
-		return fmt.Errorf("failed to get repo metadata: %w", err)
+		return err
 	}
 
-	var repo github.Repository
-	json.Unmarshal(repoMetadata.Response, &repo)
+	page := views.RecipePage(model)
 
-	file, err := s.db.GetFileByName(ctx, db.GetFileByNameParams{
+	s.c.Set(fileRef.ID(), page, cache.DefaultExpiration)
+
+	return page.Render(ctx, w)
+}
+
+func (s *Server) makeRecipeViewModel(
+	ctx context.Context,
+	jobID string,
+	fileRef utils.RepoFileRef,
+) (*views.RecipeViewModel, error) {
+	data, err := s.db.GetRecipePageData(ctx, db.GetRecipePageDataParams{
 		JobID: jobID,
 		Name:  fileRef.Path,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to get file by name: %w", err)
+		return nil, err
 	}
 
-	recipe, err := parseCooklangRecipe(file.Content)
+	var repo github.Repository
+	json.Unmarshal(data.Response, &repo)
+
+	recipe, err := parseCooklangRecipe(data.Content)
 	if err != nil {
-		return fmt.Errorf("failed to parse Cooklang recipe: %w", err)
+		return nil, err
 	}
 
-	metadata := utils.ParseCanonicalMetadata(recipe, file.Name)
-
-	s.c.Set(fileRef.ID(), recipeViewModel{
-		metadata:    metadata,
-		ghRepo:      repo,
-		recipe:      recipe,
-		fileContent: file.Content,
-	}, cache.DefaultExpiration)
-
-	component := views.RecipeView(metadata, repo, recipe, file.Content, fileRef)
-
-	return component.Render(ctx, w)
-}
-
-// pageListJobs renders the page that lists all jobs.
-func (s *Server) pageListJobs(w http.ResponseWriter, req *http.Request) error {
-	ctx := req.Context()
-
-	jobs, err := s.db.GetJobs(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get jobs from database: %w", err)
-	}
-
-	return views.JobsView(jobs).Render(ctx, w)
+	return &views.RecipeViewModel{
+		Repo:      repo,
+		Recipe:    recipe,
+		RawRecipe: data.Content,
+		File:      fileRef,
+	}, nil
 }
 
 // pageListRecipes renders the page that lists all recipes.
@@ -116,5 +95,5 @@ func (s *Server) pageListRecipes(w http.ResponseWriter, req *http.Request) error
 		return fmt.Errorf("failed to get recipes from database: %w", err)
 	}
 
-	return views.RecipesView(recipes).Render(ctx, w)
+	return views.AllRecipesPage(recipes).Render(ctx, w)
 }

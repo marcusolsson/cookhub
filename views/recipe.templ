@@ -8,7 +8,15 @@ import (
 	"github.com/marcusolsson/cookhub/github"
 )
 
-templ RecipeView(meta *utils.RecipeMetadata, author github.Repository, recipe *cooklang.RecipeV2, raw string, fileRef utils.RepoFileRef) {
+type RecipeViewModel struct {
+	Recipe    *cooklang.RecipeV2
+	File      utils.RepoFileRef
+	Repo      github.Repository
+	RawRecipe string
+}
+
+templ RecipePage(pd *RecipeViewModel) {
+	{{ meta := utils.ParseCanonicalMetadata(pd.Recipe) }}
 	<!DOCTYPE html>
 	<html>
 		<head>
@@ -16,20 +24,20 @@ templ RecipeView(meta *utils.RecipeMetadata, author github.Repository, recipe *c
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>CookHub</title>
 			<link rel="stylesheet" href="/static/styles.css"/>
-			<link rel="canonical" href={ templ.URL(fileRef.URL().String()) }/>
+			<link rel="canonical" href={ templ.URL(pd.File.URL().String()) }/>
 		</head>
 		<body>
 			<main class="container">
-				@recipeHeader(meta, author, fileRef)
+				@recipeHeader(meta, pd.Repo, pd.File)
 				@canonicalMetadata(meta)
 				@Columns() {
-					@recipeInstructions(recipe, fileRef)
-					@recipeIngredients(recipe, meta.Servings(), fileRef)
+					@recipeInstructions(pd.Recipe, pd.File)
+					@recipeIngredients(pd.Recipe, meta.Servings(), pd.File)
 				}
 				<details>
 					<summary>View the raw recipe</summary>
 					<pre>
-						<code>{ raw }</code>
+						<code>{ pd.RawRecipe }</code>
 					</pre>
 				</details>
 			</main>
@@ -50,11 +58,11 @@ templ lucideIcons() {
     </script>
 }
 
-templ recipeHeader(meta *utils.RecipeMetadata, a github.Repository, fileRef utils.RepoFileRef) {
+templ recipeHeader(meta *utils.RecipeMetadata, repo github.Repository, fileRef utils.RepoFileRef) {
 	<header class="recipe-header">
-		<h1>{ meta.Title() }</h1>
+		<h1>{ meta.Title(fileRef.Path) }</h1>
 		<div class="recipe-meta">
-			@Author(a.Owner.Login, a.Owner.URL, a.Owner.AvatarURL)
+			@Author(repo.Owner.Login, repo.Owner.URL, repo.Owner.AvatarURL)
 			@ButtonGroup() {
 				@IconButton("github", fileRef.URL().String())
 				if source := meta.Source(); source != nil {

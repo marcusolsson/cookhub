@@ -53,3 +53,12 @@ INSERT INTO repo_metadata (job_id, provider, owner, name, response) VALUES (
 -- name: GetRepoMetadataByJob :one
 SELECT * FROM repo_metadata
 WHERE job_id = $1;
+
+-- name: GetRecipePageData :one
+SELECT
+    f.content,
+    rm.response
+FROM files f
+LEFT JOIN
+    repo_metadata rm
+    ON f.job_id = rm.job_id AND f.job_id = $1 AND f.name = $2;

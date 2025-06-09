@@ -5,7 +5,7 @@ import (
 	db "github.com/marcusolsson/cookhub/db/sqlc"
 )
 
-templ RecipesView(recipes []db.GetRecipesRow) {
+templ AllRecipesPage(recipes []db.GetRecipesRow) {
 	@page() {
 		<h1>All Recipes</h1>
 		<table>
