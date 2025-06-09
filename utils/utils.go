@@ -87,20 +87,18 @@ func (rm *RecipeMetadata) Diet() string {
 }
 
 func (rm *RecipeMetadata) Source() *url.URL {
-	rawSource := cmp.Or(
-		rm.getStringProperty("source"),
-	)
+	source := rm.getStringProperty("source")
 
-	if rawSource == "" {
+	if source == "" {
 		return nil
 	}
 
-	source, err := url.Parse(rawSource)
+	u, err := url.Parse(source)
 	if err != nil {
 		return nil
 	}
 
-	return source
+	return u
 }
 
 func (rm *RecipeMetadata) Tags() []string {

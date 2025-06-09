@@ -20,3 +20,28 @@ templ Link(label, href string) {
 templ Icon(name string) {
 	<i data-lucide={ name }></i>
 }
+
+templ Author(authorName, authorURL, avatarURL string) {
+	<div class="author">
+		@Avatar(avatarURL)
+		@Link(authorName, authorURL)
+	</div>
+}
+
+templ IconButton(icon, href string) {
+	<a class="btn-icon" href={ templ.URL(href) }>
+		@Icon(icon)
+	</a>
+}
+
+templ ButtonGroup() {
+	<div class="btn-group">
+		{ children... }
+	</div>
+}
+
+templ Columns() {
+	<div class="columns">
+		{ children... }
+	</div>
+}
