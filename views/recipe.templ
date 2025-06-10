@@ -27,11 +27,12 @@ templ RecipePage(pd *RecipeViewModel) {
 			<link rel="canonical" href={ templ.URL(pd.File.URL().String()) }/>
 		</head>
 		<body>
+			@navigation()
 			<main class="container">
 				@recipePageHeader(meta, pd.Repo, pd.File)
 				@Columns() {
-					@recipeInstructions(pd.Recipe, pd.File)
 					@recipeIngredients(pd.Recipe, meta.Servings(), pd.File)
+					@recipeInstructions(pd.Recipe, pd.File)
 				}
 				<details>
 					<summary>View the raw recipe</summary>
@@ -138,16 +139,15 @@ templ cooklangIngredientList(steps []cooklang.StepV2, fileRef utils.RepoFileRef)
 }
 
 templ cooklangIngredientListItem(val cooklang.IngredientV2, fileRef utils.RepoFileRef) {
-	<li>
+	<li class="ingredient-list-item">
+		@cooklangIngredientText(val.Name, fileRef)
 		switch  {
 			case val.Units == "" && val.Quantity == 0:
-				@cooklangIngredientText(val.Name, fileRef)
+				<span></span>
 			case val.Units == "":
-				{ fmt.Sprintf("%v ", val.Quantity) }
-				@cooklangIngredientText(val.Name, fileRef)
+				<span>{ fmt.Sprintf("%v ", val.Quantity) }</span>
 			default:
-				{ fmt.Sprintf("%v %s ", val.Quantity, val.Units) }
-				@cooklangIngredientText(val.Name, fileRef)
+				<span>{ fmt.Sprintf("%v %s ", val.Quantity, val.Units) }</span>
 		}
 	</li>
 }

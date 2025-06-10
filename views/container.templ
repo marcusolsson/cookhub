@@ -10,6 +10,7 @@ templ page() {
 			<link rel="stylesheet" href="/static/styles.css"/>
 		</head>
 		<body>
+			@navigation()
 			<main class="container">
 				{ children... }
 			</main>
@@ -36,4 +37,15 @@ templ lucideIcons() {
             } 
         });
     </script>
+}
+
+templ navigation() {
+	<header id="site-header">
+		<nav>
+			<ul>
+				<li><a href="/recipes">Recipes</a></li>
+				<li><a href="/about">About</a></li>
+			</ul>
+		</nav>
+	</header>
 }
