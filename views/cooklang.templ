@@ -59,6 +59,6 @@ templ cooklangCookware(cookware cooklang.CookwareV2) {
 templ cooklangTimer(timer cooklang.TimerV2) {
 	{{ d := utils.TimerAsDuration(timer) }}
 	<time datetime={ utils.DurationToISO8601(d) }>
-		{ children... }
+		{ timer.Quantity } { timer.Unit }
 	</time>
 }

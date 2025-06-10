@@ -48,6 +48,16 @@ templ RecipePage(pd *RecipeViewModel) {
 templ recipePageHeader(meta *utils.RecipeMetadata, repo github.Repository, fileRef utils.RepoFileRef) {
 	<header class="recipe-header">
 		<h1>{ meta.Title(fileRef.Path) }</h1>
+		if desc := meta.Description(); desc != "" {
+			<p class="description">{ desc }</p>
+		}
+		if len(meta.Tags()) > 0 {
+			@TagList() {
+				for _, t := range meta.Tags() {
+					@Tag(t)
+				}
+			}
+		}
 		<section class="recipe-source">
 			@Author(repo.Owner.Login, repo.Owner.URL, repo.Owner.AvatarURL)
 			@ButtonGroup() {
@@ -57,13 +67,6 @@ templ recipePageHeader(meta *utils.RecipeMetadata, repo github.Repository, fileR
 				}
 			}
 		</section>
-		if len(meta.Tags()) > 0 {
-			@TagList() {
-				for _, t := range meta.Tags() {
-					@Tag(t)
-				}
-			}
-		}
 		@TagList() {
 			if t := meta.TotalTime(); t != "" {
 				<span><strong>Total time:</strong> { t }</span>
@@ -85,9 +88,6 @@ templ recipePageHeader(meta *utils.RecipeMetadata, repo github.Repository, fileR
 			if value := meta.Category(); value != "" {
 				@Tag(value)
 			}
-		}
-		if desc := meta.Description(); desc != "" {
-			<p class="description">{ desc }</p>
 		}
 		if u := meta.ImageURL(); u != "" {
 			@Image(u)

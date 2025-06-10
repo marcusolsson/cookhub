@@ -1,25 +1,47 @@
+:root {
+  --font-stack:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica,
+    Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-stack-mono:
+    ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono,
+    monospace;
+
+  --border-radius: 8px;
+  --border-radius-pill: 9999px;
+}
+
+:root {
+  --bg-color: hsl(0, 0%, 98%);
+  --surface0-color: hsl(0, 0%, 96%);
+  --surface1-color: hsl(0, 0%, 94%);
+  --text-color: rgba(0, 0, 0, 0.87);
+  --text-color-muted: rgba(0, 0, 0, 0.57);
+  --border-color: #e0e0e0;
+  --accent-color: rgb(68, 147, 248);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #0d1117;
+    --surface0-color: rgb(21, 27, 35);
+    --surface1-color: hsl(0, 0%, 12%);
+    --text-color: rgb(240, 246, 252);
+    --text-color-muted: rgba(240, 246, 252, 0.57);
+    --border-color: #3d444db3;
+  }
+}
+
 body {
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    avenir next,
-    avenir,
-    segoe ui,
-    helvetica neue,
-    Adwaita Sans,
-    Cantarell,
-    Ubuntu,
-    roboto,
-    noto,
-    helvetica,
-    arial,
-    sans-serif;
+  font-family: var(--font-stack);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -moz-text-size-adjust: none;
   -webkit-text-size-adjust: none;
   text-size-adjust: none;
-  line-height: 1.5;
+  line-height: 1.618;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-weight: 500;
 }
 
 .container {
@@ -32,17 +54,16 @@ pre {
   word-break: break-all;
   overflow-x: auto;
   padding: 1em;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-  font-family: monospace, monospace;
-  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+  background-color: var(--surface0-color);
+  border-radius: var(--border-radius);
+  font-family: var(--font-stack);
 }
 
 .tag {
   display: inline-block;
-  background-color: #e0e0e0;
-  color: #333;
-  border-radius: 0.5em;
+  background-color: rgba(56, 139, 253, 0.1);
+  color: rgb(68, 147, 248);
+  border-radius: var(--border-radius);
   font-weight: 500;
   padding: 0.2em 0.5em;
   font-size: 0.9em;
@@ -51,7 +72,7 @@ pre {
 .avatar {
   max-width: 32px;
   max-height: 32px;
-  border-radius: 9999px;
+  border-radius: var(--border-radius-pill);
 }
 
 .author {
@@ -73,29 +94,31 @@ table {
 
 td {
   padding: 0.5em;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
 }
 
 .recipe-header {
   display: flex;
   flex-direction: column;
   margin-bottom: 1rem;
+  gap: 0.5rem;
 }
 
 h1 {
-  font-size: 60px;
+  font-size: 3.1875rem;
   text-wrap: balance;
   line-height: 100%;
-  margin-bottom: 24px;
-  font-weight: 500;
+  margin-bottom: 0.3em;
+  font-weight: 600;
 }
 
 h2 {
-  font-size: 1.728rem;
+  font-size: 2rem;
+  font-weight: 600;
   text-wrap: balance;
-  padding-bottom: 0.5rem;
-  line-height: 1.2;
-  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.3em;
+  line-height: 1.25;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -103,19 +126,20 @@ h2 {
 }
 
 p {
+  font-size: 1.125rem;
   margin: 0 0 1rem;
 }
 
 a,
 a:visited,
 a:active {
-  font-weight: 500;
-  color: rgb(100, 111, 121);
-  text-decoration: underline;
+  font-weight: 700;
+  color: var(--text-color);
+  text-decoration: none;
 }
 
 a:hover {
-  color: #0d0d0d;
+  color: var(--accent-color);
   text-decoration: underline;
 }
 
@@ -128,17 +152,19 @@ ul li {
 }
 
 ul li::marker {
-  color: #38b000;
+  color: var(--accent-color);
 }
 
+#ingredients,
 #instructions {
-}
-
-#ingredients {
+  a {
+    color: var(--accent-color);
+    text-decoration: underline;
+  }
 }
 
 .btn-icon {
-  background-color: #38b000;
+  background-color: var(--accent-color);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -157,7 +183,7 @@ ul li::marker {
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-top: 1rem;
 }
 
 .btn-group {
@@ -169,15 +195,11 @@ ul li::marker {
 dfn {
   font-style: normal;
   display: inline-block;
-  background-color: rgba(153, 195, 255, 0.3);
-  font-weight: 500;
-  color: #333;
-  border-radius: 0.5em;
-  padding: 0.1em 0.3em;
 
-  &:hover {
-    background-color: rgba(153, 195, 255, 0.4);
-  }
+  background-color: rgba(101, 108, 118, 0.2);
+  border-radius: var(--border-radius);
+  padding: 0.2em 0.4em;
+  white-space: break-spaces;
 }
 
 #servings {
@@ -197,4 +219,24 @@ dfn {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5em;
+}
+
+summary {
+  background-color: rgb(13, 17, 23);
+  color: rgb(68, 147, 248);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  padding: 0.5em;
+  cursor: pointer;
+
+  &:hover {
+    background-color: rgb(21, 27, 35);
+  }
+}
+
+.description {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--text-color-muted);
+  margin: 0;
 }
