@@ -1,8 +1,8 @@
 #!/bin/bash
 
 config_files=(
-    marcusolsson/recipes
-	# cooklang/recipes
+	marcusolsson/recipes
+	cooklang/recipes
 	# nicholaswilde/recipes
 	# Net-Mist/remy
 	# dubadub/cookbook

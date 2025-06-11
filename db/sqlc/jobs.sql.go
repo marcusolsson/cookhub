@@ -88,6 +88,41 @@ func (q *Queries) GetAllFiles(ctx context.Context) ([]File, error) {
 	return items, nil
 }
 
+const getAllRepos = `-- name: GetAllRepos :many
+SELECT DISTINCT ON (provider, owner, name)
+    provider,
+    owner,
+    name
+FROM repo_metadata
+ORDER BY provider, owner, name, created_at DESC
+`
+
+type GetAllReposRow struct {
+	Provider string
+	Owner    string
+	Name     string
+}
+
+func (q *Queries) GetAllRepos(ctx context.Context) ([]GetAllReposRow, error) {
+	rows, err := q.db.Query(ctx, getAllRepos)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllReposRow
+	for rows.Next() {
+		var i GetAllReposRow
+		if err := rows.Scan(&i.Provider, &i.Owner, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getFileByName = `-- name: GetFileByName :one
 SELECT
     created_at,
@@ -140,6 +175,82 @@ func (q *Queries) GetFilesByJob(ctx context.Context, jobID string) ([]GetFilesBy
 	for rows.Next() {
 		var i GetFilesByJobRow
 		if err := rows.Scan(&i.CreatedAt, &i.Name, &i.Content); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getFilesByRepo = `-- name: GetFilesByRepo :many
+SELECT
+    f.id,
+    f.name,
+    f.content,
+    f.created_at,
+    j.slug,
+    j.commit_sha,
+    j.status,
+    rm.provider,
+    rm.owner,
+    rm.name AS repo_name
+FROM files f
+JOIN jobs j ON f.job_id = j.id
+JOIN repo_metadata rm ON j.id = rm.job_id
+WHERE
+    j.id = (
+        SELECT job_id
+        FROM repo_metadata m
+        WHERE m.provider = $1 AND m.owner = $2 AND m.name = $3
+        ORDER BY m.created_at DESC
+        LIMIT 1
+    )
+ORDER BY f.name
+`
+
+type GetFilesByRepoParams struct {
+	Provider string
+	Owner    string
+	Name     string
+}
+
+type GetFilesByRepoRow struct {
+	ID        string
+	Name      string
+	Content   string
+	CreatedAt pgtype.Timestamptz
+	Slug      string
+	CommitSha string
+	Status    StatusEnum
+	Provider  string
+	Owner     string
+	RepoName  string
+}
+
+func (q *Queries) GetFilesByRepo(ctx context.Context, arg GetFilesByRepoParams) ([]GetFilesByRepoRow, error) {
+	rows, err := q.db.Query(ctx, getFilesByRepo, arg.Provider, arg.Owner, arg.Name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetFilesByRepoRow
+	for rows.Next() {
+		var i GetFilesByRepoRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Content,
+			&i.CreatedAt,
+			&i.Slug,
+			&i.CommitSha,
+			&i.Status,
+			&i.Provider,
+			&i.Owner,
+			&i.RepoName,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

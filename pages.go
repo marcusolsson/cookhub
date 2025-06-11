@@ -88,14 +88,34 @@ func (s *Server) makeRecipeViewModel(
 	}, nil
 }
 
-// pageListRecipes renders the page that lists all recipes.
-func (s *Server) pageListRecipes(w http.ResponseWriter, req *http.Request) error {
+func (s *Server) pageListRecipesByRepo(w http.ResponseWriter, req *http.Request) error {
+	repoRef := utils.RepoRef{
+		Provider: chi.URLParam(req, "provider"),
+		Owner:    chi.URLParam(req, "owner"),
+		Name:     chi.URLParam(req, "name"),
+	}
+
 	ctx := req.Context()
 
-	recipes, err := s.db.GetRecipes(ctx)
+	recipes, err := s.db.GetFilesByRepo(ctx, db.GetFilesByRepoParams{
+		Provider: repoRef.Provider,
+		Owner:    repoRef.Owner,
+		Name:     repoRef.Name,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to get recipes from database: %w", err)
 	}
 
-	return views.AllRecipesPage(recipes).Render(ctx, w)
+	return views.AllRecipesPage(repoRef, recipes).Render(ctx, w)
+}
+
+func (s *Server) pageListCookbooks(w http.ResponseWriter, req *http.Request) error {
+	ctx := req.Context()
+
+	repos, err := s.db.GetAllRepos(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get recipes from database: %w", err)
+	}
+
+	return views.AllCookbooksPage(repos).Render(ctx, w)
 }

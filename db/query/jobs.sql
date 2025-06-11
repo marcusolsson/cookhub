@@ -62,3 +62,38 @@ FROM files f
 INNER JOIN
     repo_metadata rm
     ON f.job_id = rm.job_id AND f.job_id = $1 AND f.name = $2;
+
+-- name: GetFilesByRepo :many
+SELECT
+    f.id,
+    f.name,
+    f.content,
+    f.created_at,
+    j.slug,
+    j.commit_sha,
+    j.status,
+    rm.provider,
+    rm.owner,
+    rm.name AS repo_name
+FROM files f
+JOIN jobs j ON f.job_id = j.id
+JOIN repo_metadata rm ON j.id = rm.job_id
+WHERE
+    j.id = (
+        SELECT job_id
+        FROM repo_metadata m
+        WHERE m.provider = $1 AND m.owner = $2 AND m.name = $3
+        ORDER BY m.created_at DESC
+        LIMIT 1
+    )
+ORDER BY f.name;
+
+-- name: GetAllRepos :many
+SELECT DISTINCT ON (provider, owner, name)
+    provider,
+    owner,
+    name
+FROM repo_metadata
+ORDER BY provider, owner, name, created_at DESC;
+
+---

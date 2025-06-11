@@ -1,0 +1,23 @@
+package views
+
+import (
+	db "github.com/marcusolsson/cookhub/db/sqlc"
+)
+
+templ AllCookbooksPage(repos []db.GetAllReposRow) {
+	@page() {
+		<h1>Cookbooks</h1>
+		if len(repos) > 0 {
+			<ul>
+				for _, repo := range repos {
+					{{ fullName := repo.Provider + "/" + repo.Owner + "/" + repo.Name }}
+					<li><a href={ templ.URL("/" + fullName) }>{ fullName }</a></li>
+				}
+			</ul>
+		} else {
+			<p class="description">
+				No cookbooks found.
+			</p>
+		}
+	}
+}

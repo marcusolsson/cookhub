@@ -1,28 +1,28 @@
 package views
 
 import (
-	"time"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
+	"github.com/marcusolsson/cookhub/utils"
 )
 
-templ AllRecipesPage(recipes []db.GetRecipesRow) {
+templ AllRecipesPage(repoRef utils.RepoRef, recipes []db.GetFilesByRepoRow) {
 	@page() {
-		<h1>All Recipes</h1>
-		<table>
-			<thead>
-				<tr>
-					<th>Recipe</th>
-					<th>Created at</th>
-				</tr>
-			</thead>
-			<tbody>
+		<h1>Recipes by { repoRef.Owner }</h1>
+		if len(recipes) == 0 {
+			<p class="description">
+				This cookbook is empty.
+			</p>
+		} else {
+			<p class="description">
+				This page lists all recipes in <a href={ templ.URL(repoRef.URL().String()) }>{ repoRef.Slug() }</a>.
+			</p>
+			<section class="recipe-list">
 				for _, recipe := range recipes {
-					<tr>
-						<td><a href={ templ.URL("/github.com/" + recipe.Slug + "/" + recipe.Name) }>{ recipe.Name }</a></td>
-						<td>{ recipe.CreatedAt.Time.Format(time.RFC3339) } </td>
-					</tr>
+					<article class="recipe-card">
+						<h2><a href={ templ.URL("/github.com/" + recipe.Slug + "/" + recipe.Name) }>{ recipe.Name }</a></h2>
+					</article>
 				}
-			</tbody>
-		</table>
+			</section>
+		}
 	}
 }
