@@ -19,6 +19,7 @@
 
 :root {
   --bg-color: hsl(0, 0%, 98%);
+  --bg-color-transparent: hsla(0, 0%, 98%, 0.8);
   --surface0-color: hsl(0, 0%, 96%);
   --surface1-color: hsl(0, 0%, 94%);
   --text-color: rgba(0, 0, 0, 0.87);
@@ -30,6 +31,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg-color: rgb(13, 17, 23);
+    --bg-color-transparent: rgba(13, 17, 23, 0.8);
     --surface0-color: rgb(21, 27, 35);
     --surface1-color: hsl(0, 0%, 12%);
     --text-color: rgb(240, 246, 252);
@@ -273,10 +275,7 @@ details {
   border: 1px solid var(--border-color);
   padding: 1em 1em;
   backdrop-filter: blur(24px);
-  background-color: rgba(13, 17, 23, 0.8);
-  box-shadow:
-    rgba(20, 20, 20, 0.15) 0px 2px 6px 0px,
-    rgba(20, 20, 20, 0.15) 0px 1px 1px 0px;
+  background-color: var(--bg-color-transparent);
 
   ul {
     display: flex;
