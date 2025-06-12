@@ -1,14 +1,15 @@
 package views
 
 import (
+	"fmt"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
 	"github.com/marcusolsson/cookhub/utils"
 )
 
-templ AllRecipesPage(repoRef utils.RepoRef, recipes []db.GetFilesByRepoRow) {
+templ AllRecipesPage(repoRef utils.RepoRef, files []db.GetFilesRow) {
 	@page() {
 		<h1>Recipes by { repoRef.Owner }</h1>
-		if len(recipes) == 0 {
+		if len(files) == 0 {
 			<p class="description">
 				This cookbook is empty.
 			</p>
@@ -17,9 +18,10 @@ templ AllRecipesPage(repoRef utils.RepoRef, recipes []db.GetFilesByRepoRow) {
 				This page lists all recipes in <a href={ templ.URL(repoRef.URL().String()) }>{ repoRef.Slug() }</a>.
 			</p>
 			<section class="recipe-list">
-				for _, recipe := range recipes {
+				for _, file := range files {
 					<article class="recipe-card">
-						<h2><a href={ templ.URL("/github.com/" + recipe.Slug + "/" + recipe.Name) }>{ recipe.Name }</a></h2>
+						{{ u := fmt.Sprintf("/%s/%s/%s/%s", file.Provider, file.Owner, file.RepoName, file.Path) }}
+						<h2><a href={ templ.URL(u) }>{ file.Path }</a></h2>
 					</article>
 				}
 			</section>

@@ -9,13 +9,13 @@ import (
 	"context"
 )
 
-// iteratorForCreateFile implements pgx.CopyFromSource.
-type iteratorForCreateFile struct {
-	rows                 []CreateFileParams
+// iteratorForImportFiles implements pgx.CopyFromSource.
+type iteratorForImportFiles struct {
+	rows                 []ImportFilesParams
 	skippedFirstNextCall bool
 }
 
-func (r *iteratorForCreateFile) Next() bool {
+func (r *iteratorForImportFiles) Next() bool {
 	if len(r.rows) == 0 {
 		return false
 	}
@@ -27,18 +27,23 @@ func (r *iteratorForCreateFile) Next() bool {
 	return len(r.rows) > 0
 }
 
-func (r iteratorForCreateFile) Values() ([]interface{}, error) {
+func (r iteratorForImportFiles) Values() ([]interface{}, error) {
 	return []interface{}{
-		r.rows[0].JobID,
-		r.rows[0].Name,
+		r.rows[0].IngestionRunID,
+		r.rows[0].Path,
+		r.rows[0].Basename,
+		r.rows[0].Stem,
+		r.rows[0].Extension,
 		r.rows[0].Content,
+		r.rows[0].SizeBytes,
+		r.rows[0].Hash,
 	}, nil
 }
 
-func (r iteratorForCreateFile) Err() error {
+func (r iteratorForImportFiles) Err() error {
 	return nil
 }
 
-func (q *Queries) CreateFile(ctx context.Context, arg []CreateFileParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"files"}, []string{"job_id", "name", "content"}, &iteratorForCreateFile{rows: arg})
+func (q *Queries) ImportFiles(ctx context.Context, arg []ImportFilesParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"files"}, []string{"ingestion_run_id", "path", "basename", "stem", "extension", "content", "size_bytes", "hash"}, &iteratorForImportFiles{rows: arg})
 }

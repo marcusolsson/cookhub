@@ -32,7 +32,7 @@ func (srv *Server) Router() chi.Router {
 
 	// API routes handle admin operations.
 	r.Route("/api", func(r chi.Router) {
-		r.Post("/{provider}/{owner}/{name}", srv.apiIndexRepo)
+		r.Post("/import", srv.apiImportRepos)
 	})
 
 	// Serve all files in the "/static" directory.

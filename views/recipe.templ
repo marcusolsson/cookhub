@@ -5,13 +5,11 @@ import (
 
 	"github.com/aquilax/cooklang-go"
 	"github.com/marcusolsson/cookhub/utils"
-	"github.com/marcusolsson/cookhub/github"
 )
 
 type RecipeViewModel struct {
 	Recipe    *cooklang.RecipeV2
 	File      utils.RepoFileRef
-	Repo      github.Repository
 	RawRecipe string
 }
 
@@ -29,7 +27,7 @@ templ RecipePage(pd *RecipeViewModel) {
 		<body>
 			@navigation()
 			<main class="container">
-				@recipePageHeader(meta, pd.Repo, pd.File)
+				@recipePageHeader(meta, pd.File)
 				@Columns() {
 					@recipeIngredients(pd.Recipe, meta.Servings(), pd.File)
 					@recipeInstructions(pd.Recipe, pd.File)
@@ -46,7 +44,7 @@ templ RecipePage(pd *RecipeViewModel) {
 	</html>
 }
 
-templ recipePageHeader(meta *utils.RecipeMetadata, repo github.Repository, fileRef utils.RepoFileRef) {
+templ recipePageHeader(meta *utils.RecipeMetadata, fileRef utils.RepoFileRef) {
 	<header class="recipe-header">
 		<h1>{ meta.Title(fileRef.Path) }</h1>
 		if desc := meta.Description(); desc != "" {
@@ -60,7 +58,7 @@ templ recipePageHeader(meta *utils.RecipeMetadata, repo github.Repository, fileR
 			}
 		}
 		<section class="recipe-source">
-			@Author(repo.Owner.Login, repo.Owner.URL, repo.Owner.AvatarURL)
+			//@Author(repo.Owner.Login, repo.Owner.URL, repo.Owner.AvatarURL)
 			@ButtonGroup() {
 				@IconButton("github", fileRef.URL().String())
 				if source := meta.Source(); source != nil {

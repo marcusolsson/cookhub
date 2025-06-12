@@ -11,71 +11,79 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type StatusEnum string
+type Status string
 
 const (
-	StatusEnumPending   StatusEnum = "pending"
-	StatusEnumCompleted StatusEnum = "completed"
-	StatusEnumFailed    StatusEnum = "failed"
+	StatusProcessing Status = "processing"
+	StatusCompleted  Status = "completed"
+	StatusFailed     Status = "failed"
 )
 
-func (e *StatusEnum) Scan(src interface{}) error {
+func (e *Status) Scan(src interface{}) error {
 	switch s := src.(type) {
 	case []byte:
-		*e = StatusEnum(s)
+		*e = Status(s)
 	case string:
-		*e = StatusEnum(s)
+		*e = Status(s)
 	default:
-		return fmt.Errorf("unsupported scan type for StatusEnum: %T", src)
+		return fmt.Errorf("unsupported scan type for Status: %T", src)
 	}
 	return nil
 }
 
-type NullStatusEnum struct {
-	StatusEnum StatusEnum
-	Valid      bool // Valid is true if StatusEnum is not NULL
+type NullStatus struct {
+	Status Status
+	Valid  bool // Valid is true if Status is not NULL
 }
 
 // Scan implements the Scanner interface.
-func (ns *NullStatusEnum) Scan(value interface{}) error {
+func (ns *NullStatus) Scan(value interface{}) error {
 	if value == nil {
-		ns.StatusEnum, ns.Valid = "", false
+		ns.Status, ns.Valid = "", false
 		return nil
 	}
 	ns.Valid = true
-	return ns.StatusEnum.Scan(value)
+	return ns.Status.Scan(value)
 }
 
 // Value implements the driver Valuer interface.
-func (ns NullStatusEnum) Value() (driver.Value, error) {
+func (ns NullStatus) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil
 	}
-	return string(ns.StatusEnum), nil
+	return string(ns.Status), nil
 }
 
 type File struct {
-	ID        string
-	CreatedAt pgtype.Timestamptz
-	JobID     string
-	Name      string
-	Content   string
+	ID             string
+	IngestionRunID string
+	CreatedAt      pgtype.Timestamptz
+	Path           string
+	Basename       string
+	Stem           string
+	Extension      string
+	Content        string
+	SizeBytes      int32
+	Hash           []byte
 }
 
-type Job struct {
-	ID        string
-	CreatedAt pgtype.Timestamptz
-	Slug      string
-	CommitSha string
-	Status    StatusEnum
+type IngestionRun struct {
+	ID                  string
+	RepositoryID        string
+	Branch              string
+	CommitSha           string
+	Status              Status
+	StartedAt           pgtype.Timestamptz
+	FilesProcessedCount pgtype.Int4
+	CompletedAt         pgtype.Timestamptz
+	ErrorMessage        pgtype.Text
 }
 
-type RepoMetadatum struct {
-	ID        string
-	CreatedAt pgtype.Timestamptz
-	JobID     string
-	Provider  string
-	Owner     string
-	Name      string
-	Response  []byte
+type Repository struct {
+	ID       string
+	Url      string
+	Provider string
+	Owner    string
+	RepoName string
+	Branch   string
 }

@@ -12,7 +12,7 @@ import (
 	db "github.com/marcusolsson/cookhub/db/sqlc"
 )
 
-func AllCookbooksPage(repos []db.GetAllReposRow) templ.Component {
+func AllCookbooksPage(repos []db.Repository) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -55,7 +55,7 @@ func AllCookbooksPage(repos []db.GetAllReposRow) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				for _, repo := range repos {
-					fullName := repo.Provider + "/" + repo.Owner + "/" + repo.Name
+					fullName := repo.Provider + "/" + repo.Owner + "/" + repo.RepoName
 					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<li><a href=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
