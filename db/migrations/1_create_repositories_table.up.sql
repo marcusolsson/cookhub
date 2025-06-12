@@ -10,4 +10,5 @@ CREATE TABLE repositories (
 INSERT INTO repositories
 (url, provider, owner, repo_name, branch)
 VALUES
-('github.com/cooklang/recipes', 'github.com', 'cooklang', 'recipes', 'HEAD');
+('github.com/cooklang/recipes', 'github.com', 'cooklang', 'recipes', 'HEAD'),
+('github.com/marcusolsson/recipes', 'github.com', 'marcusolsson', 'recipes', 'main');
