@@ -69,8 +69,8 @@ type File struct {
 
 type IngestionRun struct {
 	ID                  string
-	RepositoryID        string
-	Branch              string
+	RepoID              string
+	RepoRef             string
 	CommitSha           string
 	Status              Status
 	StartedAt           pgtype.Timestamptz
@@ -85,5 +85,6 @@ type Repository struct {
 	Provider string
 	Owner    string
 	RepoName string
-	Branch   string
+	Slug     string
+	Ref      string
 }

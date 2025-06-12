@@ -1,8 +1,15 @@
+-- name: AddRepository :exec
+insert into repositories (
+    url, provider, owner, repo_name, slug, ref
+) values (
+    $1, $2, $3, $4, $5, $6
+);
+
 -- name: ListIngestionRuns :many
 select * from ingestion_runs;
 
 -- name: CreateIngestionRun :one
-insert into ingestion_runs (repository_id, branch, commit_sha) values (
+insert into ingestion_runs (repo_id, repo_ref, commit_sha) values (
     $1, $2, $3
 ) returning id;
 
@@ -37,7 +44,7 @@ with latest_run as (
             order by ir.started_at desc
         ) as rn
     from ingestion_runs ir
-    join repositories r on ir.repository_id = r.id
+    join repositories r on ir.repo_id = r.id
     where
         r.provider = $1
         and r.owner = $2
@@ -62,7 +69,7 @@ with latest_run as (
             order by ir.started_at desc
         ) as rn
     from ingestion_runs ir
-    join repositories r on ir.repository_id = r.id
+    join repositories r on ir.repo_id = r.id
     where
         r.provider = $1
         and r.owner = $2
@@ -86,7 +93,7 @@ with latest_run as (
             order by ir.started_at desc
         ) as rn
     from ingestion_runs ir
-    join repositories r on ir.repository_id = r.id
+    join repositories r on ir.repo_id = r.id
     where r.id = $1
 )
 

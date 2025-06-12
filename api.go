@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"os"
@@ -14,6 +15,39 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
 )
+
+func (s *Server) apiAddRepository(w http.ResponseWriter, req *http.Request) {
+	var body struct {
+		Slug string `json:"slug"`
+		Ref  string `json:"ref"`
+	}
+
+	json.NewDecoder(req.Body).Decode(&body)
+
+	if body.Ref == "" {
+		body.Ref = "HEAD"
+	}
+
+	segments := strings.Split(body.Slug, "/")
+
+	if len(segments) != 3 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if err := s.db.AddRepository(context.Background(), db.AddRepositoryParams{
+		Ref:      body.Ref,
+		Url:      body.Slug,
+		Provider: segments[0],
+		Owner:    segments[1],
+		RepoName: segments[2],
+		Slug:     segments[1] + "/" + segments[2],
+	}); err != nil {
+		s.logger.Error("Failed to add repository", "error", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
 
 func (s *Server) apiImportRepos(w http.ResponseWriter, req *http.Request) {
 	ctx := context.Background()
@@ -41,7 +75,7 @@ func (s *Server) apiImportRepos(w http.ResponseWriter, req *http.Request) {
 			for repo := range ch {
 				ctxlog := s.logger.With("repository_id", repo.ID, "repository", repo.Url)
 
-				sha, err := s.gh.GetLatestCommitSHA(ctx, repo.Owner, repo.RepoName, repo.Branch)
+				sha, err := s.gh.GetLatestCommitSHA(ctx, repo.Owner, repo.RepoName, repo.Ref)
 				if err != nil {
 					ctxlog.Error("Failed to get latest commit SHA from repo", "error", err)
 					continue
@@ -52,6 +86,8 @@ func (s *Server) apiImportRepos(w http.ResponseWriter, req *http.Request) {
 					continue
 				}
 
+				ctxlog = ctxlog.With("commit_sha", sha)
+
 				last_sha, err := s.db.GetCommitShaByRepo(ctx, repo.ID)
 				if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 					ctxlog.Error("Failed to get last commit SHA from database", "error", err)
@@ -59,9 +95,11 @@ func (s *Server) apiImportRepos(w http.ResponseWriter, req *http.Request) {
 				}
 
 				if sha == last_sha {
-					ctxlog.Info("Skipping up-to-date repository", "commit_sha", sha)
+					ctxlog.Info("Skipping up-to-date repository")
 					return
 				}
+
+				ctxlog.Info("Ingesting files")
 
 				if err := s.withIngestionRun(ctx, repo, sha, s.ingestFiles); err != nil {
 					ctxlog.Info("Failed to ingest files", "error", err.Error())
@@ -89,9 +127,9 @@ func (s *Server) withIngestionRun(
 	fn func(ctx context.Context, qs *db.Queries, repo db.Repository, runID, sha string) (int, error),
 ) error {
 	runID, err := s.db.CreateIngestionRun(ctx, db.CreateIngestionRunParams{
-		RepositoryID: repo.ID,
-		Branch:       repo.Branch,
-		CommitSha:    commitSHA,
+		RepoID:    repo.ID,
+		RepoRef:   repo.Ref,
+		CommitSha: commitSHA,
 	})
 	if err != nil {
 		return err

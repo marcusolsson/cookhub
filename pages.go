@@ -26,8 +26,6 @@ func (s *Server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error 
 		Ref:  "HEAD",
 	}
 
-	fmt.Println(fileRef)
-
 	ctx := req.Context()
 
 	if item, found := s.c.Get(fileRef.ID()); found {

@@ -11,20 +11,49 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addRepository = `-- name: AddRepository :exec
+insert into repositories (
+    url, provider, owner, repo_name, slug, ref
+) values (
+    $1, $2, $3, $4, $5, $6
+)
+`
+
+type AddRepositoryParams struct {
+	Url      string
+	Provider string
+	Owner    string
+	RepoName string
+	Slug     string
+	Ref      string
+}
+
+func (q *Queries) AddRepository(ctx context.Context, arg AddRepositoryParams) error {
+	_, err := q.db.Exec(ctx, addRepository,
+		arg.Url,
+		arg.Provider,
+		arg.Owner,
+		arg.RepoName,
+		arg.Slug,
+		arg.Ref,
+	)
+	return err
+}
+
 const createIngestionRun = `-- name: CreateIngestionRun :one
-insert into ingestion_runs (repository_id, branch, commit_sha) values (
+insert into ingestion_runs (repo_id, repo_ref, commit_sha) values (
     $1, $2, $3
 ) returning id
 `
 
 type CreateIngestionRunParams struct {
-	RepositoryID string
-	Branch       string
-	CommitSha    string
+	RepoID    string
+	RepoRef   string
+	CommitSha string
 }
 
 func (q *Queries) CreateIngestionRun(ctx context.Context, arg CreateIngestionRunParams) (string, error) {
-	row := q.db.QueryRow(ctx, createIngestionRun, arg.RepositoryID, arg.Branch, arg.CommitSha)
+	row := q.db.QueryRow(ctx, createIngestionRun, arg.RepoID, arg.RepoRef, arg.CommitSha)
 	var id string
 	err := row.Scan(&id)
 	return id, err
@@ -38,7 +67,7 @@ with latest_run as (
             order by ir.started_at desc
         ) as rn
     from ingestion_runs ir
-    join repositories r on ir.repository_id = r.id
+    join repositories r on ir.repo_id = r.id
     where r.id = $1
 )
 
@@ -56,12 +85,12 @@ func (q *Queries) GetCommitShaByRepo(ctx context.Context, id string) (string, er
 const getFile = `-- name: GetFile :one
 with latest_run as (
     select
-        ir.id, ir.repository_id, ir.branch, ir.commit_sha, ir.status, ir.started_at, ir.files_processed_count, ir.completed_at, ir.error_message,
+        ir.id, ir.repo_id, ir.repo_ref, ir.commit_sha, ir.status, ir.started_at, ir.files_processed_count, ir.completed_at, ir.error_message,
         row_number() over (
             order by ir.started_at desc
         ) as rn
     from ingestion_runs ir
-    join repositories r on ir.repository_id = r.id
+    join repositories r on ir.repo_id = r.id
     where
         r.provider = $1
         and r.owner = $2
@@ -112,12 +141,12 @@ with latest_run as (
         r.provider,
         r.owner,
         r.repo_name,
-        ir.id, ir.repository_id, ir.branch, ir.commit_sha, ir.status, ir.started_at, ir.files_processed_count, ir.completed_at, ir.error_message,
+        ir.id, ir.repo_id, ir.repo_ref, ir.commit_sha, ir.status, ir.started_at, ir.files_processed_count, ir.completed_at, ir.error_message,
         row_number() over (
             order by ir.started_at desc
         ) as rn
     from ingestion_runs ir
-    join repositories r on ir.repository_id = r.id
+    join repositories r on ir.repo_id = r.id
     where
         r.provider = $1
         and r.owner = $2
@@ -202,7 +231,7 @@ type ImportFilesParams struct {
 }
 
 const listIngestionRuns = `-- name: ListIngestionRuns :many
-select id, repository_id, branch, commit_sha, status, started_at, files_processed_count, completed_at, error_message from ingestion_runs
+select id, repo_id, repo_ref, commit_sha, status, started_at, files_processed_count, completed_at, error_message from ingestion_runs
 `
 
 func (q *Queries) ListIngestionRuns(ctx context.Context) ([]IngestionRun, error) {
@@ -216,8 +245,8 @@ func (q *Queries) ListIngestionRuns(ctx context.Context) ([]IngestionRun, error)
 		var i IngestionRun
 		if err := rows.Scan(
 			&i.ID,
-			&i.RepositoryID,
-			&i.Branch,
+			&i.RepoID,
+			&i.RepoRef,
 			&i.CommitSha,
 			&i.Status,
 			&i.StartedAt,
@@ -236,7 +265,7 @@ func (q *Queries) ListIngestionRuns(ctx context.Context) ([]IngestionRun, error)
 }
 
 const listRepositories = `-- name: ListRepositories :many
-select id, url, provider, owner, repo_name, branch from repositories
+select id, url, provider, owner, repo_name, slug, ref from repositories
 `
 
 func (q *Queries) ListRepositories(ctx context.Context) ([]Repository, error) {
@@ -254,7 +283,8 @@ func (q *Queries) ListRepositories(ctx context.Context) ([]Repository, error) {
 			&i.Provider,
 			&i.Owner,
 			&i.RepoName,
-			&i.Branch,
+			&i.Slug,
+			&i.Ref,
 		); err != nil {
 			return nil, err
 		}
