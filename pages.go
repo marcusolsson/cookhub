@@ -10,16 +10,18 @@ import (
 	"github.com/marcusolsson/cookhub/views"
 )
 
-// pageShowRecipe renders the page for a specific recipe.
-func (s *Server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error {
+// recipePage renders the page for a specific recipe.
+func (s *Server) recipePage(w http.ResponseWriter, req *http.Request) error {
 	ctx := req.Context()
 
-	file, err := s.db.GetFile(ctx, db.GetFileParams{
+	params := db.GetFileParams{
 		Provider: chi.URLParam(req, "provider"),
 		Owner:    chi.URLParam(req, "owner"),
 		RepoName: chi.URLParam(req, "name"),
 		Path:     chi.URLParam(req, "*"),
-	})
+	}
+
+	file, err := s.db.GetFile(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -28,6 +30,7 @@ func (s *Server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error 
 	if err != nil {
 		return err
 	}
+
 	model := &views.RecipeViewModel{
 		Recipe: recipe,
 		File:   file,
@@ -38,7 +41,7 @@ func (s *Server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error 
 	return page.Render(ctx, w)
 }
 
-func (s *Server) pageListRecipesByRepo(w http.ResponseWriter, req *http.Request) error {
+func (s *Server) cookbookPage(w http.ResponseWriter, req *http.Request) error {
 	repoRef := utils.RepoRef{
 		Provider: chi.URLParam(req, "provider"),
 		Owner:    chi.URLParam(req, "owner"),

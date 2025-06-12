@@ -26,8 +26,8 @@ func (srv *Server) Router() chi.Router {
 
 	h := errorHandler(srv.logger)
 
-	r.Get("/{provider}/{owner}/{name}/*", h(srv.pageShowRecipe))
-	r.Get("/{provider}/{owner}/{name}", h(srv.pageListRecipesByRepo))
+	r.Get("/{provider}/{owner}/{name}/*", h(srv.recipePage))
+	r.Get("/{provider}/{owner}/{name}", h(srv.cookbookPage))
 
 	// API routes handle admin operations.
 	r.Route("/api", func(r chi.Router) {
