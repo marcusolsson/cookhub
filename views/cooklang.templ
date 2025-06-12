@@ -5,14 +5,15 @@ import (
 
 	"github.com/aquilax/cooklang-go"
 	"github.com/marcusolsson/cookhub/utils"
+	db "github.com/marcusolsson/cookhub/db/sqlc"
 )
 
-templ cooklangStep(step any, fileRef utils.RepoFileRef) {
+templ cooklangStep(step any, file db.GetFileRow) {
 	switch val := step.(type) {
 		case cooklang.TextV2:
 			@cooklangText(val)
 		case cooklang.IngredientV2:
-			@cooklangIngredient(val, fileRef)
+			@cooklangIngredient(val, file)
 		case cooklang.CookwareV2:
 			@cooklangCookware(val)
 		case cooklang.TimerV2:
@@ -28,9 +29,9 @@ templ cooklangText(val cooklang.TextV2) {
 	}
 }
 
-templ cooklangIngredient(val cooklang.IngredientV2, fileRef utils.RepoFileRef) {
+templ cooklangIngredient(val cooklang.IngredientV2, file db.GetFileRow) {
 	if strings.HasPrefix(val.Name, "./") {
-		{{ u := utils.ResolveRecipe("/"+fileRef.ID(), val.Name+".cook") }}
+		{{ u := utils.ResolveRecipe(relativeFileURL(file), val.Name+".cook") }}
 		<a href={ templ.URL(u) }>
 			{ strings.TrimPrefix(val.Name, "./") }
 		</a>
@@ -41,9 +42,9 @@ templ cooklangIngredient(val cooklang.IngredientV2, fileRef utils.RepoFileRef) {
 	}
 }
 
-templ cooklangIngredientText(name string, fileRef utils.RepoFileRef) {
+templ cooklangIngredientText(name string, file db.GetFileRow) {
 	if strings.HasPrefix(name, "./") {
-		{{ u := utils.ResolveRecipe("/"+fileRef.ID(), name+".cook") }}
+		{{ u := utils.ResolveRecipe(relativeFileURL(file), name+".cook") }}
 		<a href={ templ.URL(u) }>
 			{ strings.TrimPrefix(name, "./") }
 		</a>

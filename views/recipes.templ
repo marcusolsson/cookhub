@@ -21,7 +21,7 @@ templ AllRecipesPage(repoRef utils.RepoRef, files []db.GetFilesRow) {
 				for _, file := range files {
 					<article class="recipe-card">
 						{{ u := fmt.Sprintf("/%s/%s/%s/%s", file.Provider, file.Owner, file.RepoName, file.Path) }}
-						<h2><a href={ templ.URL(u) }>{ file.Path }</a></h2>
+						<h2><a href={ templ.URL(u) }>{ file.Stem }</a></h2>
 					</article>
 				}
 			</section>

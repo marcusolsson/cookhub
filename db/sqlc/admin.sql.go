@@ -85,6 +85,9 @@ func (q *Queries) GetCommitShaByRepo(ctx context.Context, id string) (string, er
 const getFile = `-- name: GetFile :one
 with latest_run as (
     select
+        r.provider,
+        r.owner,
+        r.repo_name,
         ir.id, ir.repo_id, ir.repo_ref, ir.commit_sha, ir.status, ir.started_at, ir.files_processed_count, ir.completed_at, ir.error_message,
         row_number() over (
             order by ir.started_at desc
@@ -97,7 +100,11 @@ with latest_run as (
         and r.repo_name = $3
 )
 
-select f.id, f.ingestion_run_id, f.created_at, f.path, f.basename, f.stem, f.extension, f.content, f.size_bytes, f.hash
+select
+    lr.provider,
+    lr.owner,
+    lr.repo_name,
+    f.id, f.ingestion_run_id, f.created_at, f.path, f.basename, f.stem, f.extension, f.content, f.size_bytes, f.hash
 from files f
 join latest_run lr on f.ingestion_run_id = lr.id
 where
@@ -112,15 +119,34 @@ type GetFileParams struct {
 	Path     string
 }
 
-func (q *Queries) GetFile(ctx context.Context, arg GetFileParams) (File, error) {
+type GetFileRow struct {
+	Provider       string
+	Owner          string
+	RepoName       string
+	ID             string
+	IngestionRunID string
+	CreatedAt      pgtype.Timestamptz
+	Path           string
+	Basename       string
+	Stem           string
+	Extension      string
+	Content        string
+	SizeBytes      int32
+	Hash           []byte
+}
+
+func (q *Queries) GetFile(ctx context.Context, arg GetFileParams) (GetFileRow, error) {
 	row := q.db.QueryRow(ctx, getFile,
 		arg.Provider,
 		arg.Owner,
 		arg.RepoName,
 		arg.Path,
 	)
-	var i File
+	var i GetFileRow
 	err := row.Scan(
+		&i.Provider,
+		&i.Owner,
+		&i.RepoName,
 		&i.ID,
 		&i.IngestionRunID,
 		&i.CreatedAt,

@@ -116,7 +116,7 @@ func AllRecipesPage(repoRef utils.RepoRef, files []db.GetFilesRow) templ.Compone
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var7 string
-					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(file.Path)
+					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(file.Stem)
 					if templ_7745c5c3_Err != nil {
 						return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/recipes.templ`, Line: 24, Col: 46}
 					}

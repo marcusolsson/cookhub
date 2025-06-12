@@ -39,6 +39,9 @@ where id = $3;
 -- name: GetFile :one
 with latest_run as (
     select
+        r.provider,
+        r.owner,
+        r.repo_name,
         ir.*,
         row_number() over (
             order by ir.started_at desc
@@ -51,7 +54,11 @@ with latest_run as (
         and r.repo_name = $3
 )
 
-select f.*
+select
+    lr.provider,
+    lr.owner,
+    lr.repo_name,
+    f.*
 from files f
 join latest_run lr on f.ingestion_run_id = lr.id
 where

@@ -1,4 +1,3 @@
-
 package views
 
 templ Tag(tag string) {
@@ -21,9 +20,8 @@ templ Icon(name string) {
 	<i data-lucide={ name }></i>
 }
 
-templ Author(authorName, authorURL, avatarURL string) {
+templ Author(authorName, authorURL string) {
 	<div class="author">
-		@Avatar(avatarURL)
 		@Link(authorName, authorURL)
 	</div>
 }

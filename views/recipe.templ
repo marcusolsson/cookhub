@@ -2,15 +2,29 @@ package views
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/aquilax/cooklang-go"
 	"github.com/marcusolsson/cookhub/utils"
+	"github.com/marcusolsson/cookhub/db/sqlc"
 )
 
 type RecipeViewModel struct {
 	Recipe    *cooklang.RecipeV2
-	File      utils.RepoFileRef
 	RawRecipe string
+	File      db.GetFileRow
+}
+
+func fileID(file db.GetFileRow) string {
+	return strings.Join([]string{file.Provider, file.Owner, file.RepoName, file.Path}, "/")
+}
+
+func canonicalFileURL(file db.GetFileRow) string {
+	return "https://" + fileID(file)
+}
+
+func relativeFileURL(file db.GetFileRow) string {
+	return "/" + fileID(file)
 }
 
 templ RecipePage(pd *RecipeViewModel) {
@@ -22,7 +36,7 @@ templ RecipePage(pd *RecipeViewModel) {
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>CookHub</title>
 			<link rel="stylesheet" href="/static/styles.css"/>
-			<link rel="canonical" href={ templ.URL(pd.File.URL().String()) }/>
+			<link rel="canonical" href={ templ.URL(canonicalFileURL(pd.File)) }/>
 		</head>
 		<body>
 			@navigation()
@@ -44,9 +58,9 @@ templ RecipePage(pd *RecipeViewModel) {
 	</html>
 }
 
-templ recipePageHeader(meta *utils.RecipeMetadata, fileRef utils.RepoFileRef) {
+templ recipePageHeader(meta *utils.RecipeMetadata, file db.GetFileRow) {
 	<header class="recipe-header">
-		<h1>{ meta.Title(fileRef.Path) }</h1>
+		<h1>{ meta.Title(file.Path) }</h1>
 		if desc := meta.Description(); desc != "" {
 			<p class="description">{ desc }</p>
 		}
@@ -58,9 +72,9 @@ templ recipePageHeader(meta *utils.RecipeMetadata, fileRef utils.RepoFileRef) {
 			}
 		}
 		<section class="recipe-source">
-			//@Author(repo.Owner.Login, repo.Owner.URL, repo.Owner.AvatarURL)
+			@Author(file.Owner, fmt.Sprintf("https://%s/%s", file.Provider, file.Owner))
 			@ButtonGroup() {
-				@IconButton("github", fileRef.URL().String())
+				@IconButton("github", string(canonicalFileURL(file)))
 				if source := meta.Source(); source != nil {
 					@IconButton("external-link", source.String())
 				}
@@ -94,18 +108,18 @@ templ recipePageHeader(meta *utils.RecipeMetadata, fileRef utils.RepoFileRef) {
 	</header>
 }
 
-templ recipeInstructions(recipe *cooklang.RecipeV2, fileRef utils.RepoFileRef) {
+templ recipeInstructions(recipe *cooklang.RecipeV2, file db.GetFileRow) {
 	<section id="instructions">
 		<h2>Instructions</h2>
 		for _, step := range recipe.Steps {
 			for _, component := range step {
-				@cooklangStep(component, fileRef)
+				@cooklangStep(component, file)
 			}
 		}
 	</section>
 }
 
-templ recipeIngredients(recipe *cooklang.RecipeV2, servings float64, fileRef utils.RepoFileRef) {
+templ recipeIngredients(recipe *cooklang.RecipeV2, servings float64, file db.GetFileRow) {
 	<aside id="ingredients">
 		<h2>
 			Ingredients
@@ -113,7 +127,7 @@ templ recipeIngredients(recipe *cooklang.RecipeV2, servings float64, fileRef uti
 				@servingsLabel(servings)
 			}
 		</h2>
-		@cooklangIngredientList(recipe.Steps, fileRef)
+		@cooklangIngredientList(recipe.Steps, file)
 	</aside>
 }
 
@@ -123,22 +137,22 @@ templ servingsLabel(servings float64) {
 	</div>
 }
 
-templ cooklangIngredientList(steps []cooklang.StepV2, fileRef utils.RepoFileRef) {
+templ cooklangIngredientList(steps []cooklang.StepV2, file db.GetFileRow) {
 	<ul>
 		for _, section := range steps {
 			for _, step := range section {
 				switch val := step.(type) {
 					case cooklang.IngredientV2:
-						@cooklangIngredientListItem(val, fileRef)
+						@cooklangIngredientListItem(val, file)
 				}
 			}
 		}
 	</ul>
 }
 
-templ cooklangIngredientListItem(val cooklang.IngredientV2, fileRef utils.RepoFileRef) {
+templ cooklangIngredientListItem(val cooklang.IngredientV2, file db.GetFileRow) {
 	<li class="ingredient-list-item">
-		@cooklangIngredientText(val.Name, fileRef)
+		@cooklangIngredientText(val.Name, file)
 		switch  {
 			case val.Units == "" && val.Quantity == 0:
 				<span></span>
