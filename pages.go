@@ -79,14 +79,3 @@ func (s *Server) pageListRecipesByRepo(w http.ResponseWriter, req *http.Request)
 
 	return views.AllRecipesPage(repoRef, files).Render(ctx, w)
 }
-
-func (s *Server) pageListCookbooks(w http.ResponseWriter, req *http.Request) error {
-	ctx := req.Context()
-
-	repos, err := s.db.ListRepositories(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get recipes from database: %w", err)
-	}
-
-	return views.AllCookbooksPage(repos).Render(ctx, w)
-}
