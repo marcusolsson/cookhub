@@ -30,21 +30,50 @@ func (q *Queries) CreateIngestionRun(ctx context.Context, arg CreateIngestionRun
 	return id, err
 }
 
-const getFile = `-- name: GetFile :one
-WITH latest_run AS (
-  SELECT ir.id, ir.repository_id, ir.branch, ir.commit_sha, ir.status, ir.started_at, ir.files_processed_count, ir.completed_at, ir.error_message,
-         ROW_NUMBER() OVER (ORDER BY ir.started_at DESC) as rn
-  FROM ingestion_runs ir
-  JOIN repositories r ON ir.repository_id = r.id
-  WHERE r.provider = $1 
-    AND r.owner = $2 
-    AND r.repo_name = $3
+const getCommitShaByRepo = `-- name: GetCommitShaByRepo :one
+with latest_run as (
+    select
+        ir.commit_sha,
+        row_number() over (
+            order by ir.started_at desc
+        ) as rn
+    from ingestion_runs ir
+    join repositories r on ir.repository_id = r.id
+    where r.id = $1
 )
-SELECT f.id, f.ingestion_run_id, f.created_at, f.path, f.basename, f.stem, f.extension, f.content, f.size_bytes, f.hash
-FROM files f
-JOIN latest_run lr ON f.ingestion_run_id = lr.id
-WHERE lr.rn = 1
-  AND f.path = $4
+
+select commit_sha from latest_run
+where rn = 1
+`
+
+func (q *Queries) GetCommitShaByRepo(ctx context.Context, id string) (string, error) {
+	row := q.db.QueryRow(ctx, getCommitShaByRepo, id)
+	var commit_sha string
+	err := row.Scan(&commit_sha)
+	return commit_sha, err
+}
+
+const getFile = `-- name: GetFile :one
+with latest_run as (
+    select
+        ir.id, ir.repository_id, ir.branch, ir.commit_sha, ir.status, ir.started_at, ir.files_processed_count, ir.completed_at, ir.error_message,
+        row_number() over (
+            order by ir.started_at desc
+        ) as rn
+    from ingestion_runs ir
+    join repositories r on ir.repository_id = r.id
+    where
+        r.provider = $1
+        and r.owner = $2
+        and r.repo_name = $3
+)
+
+select f.id, f.ingestion_run_id, f.created_at, f.path, f.basename, f.stem, f.extension, f.content, f.size_bytes, f.hash
+from files f
+join latest_run lr on f.ingestion_run_id = lr.id
+where
+    lr.rn = 1
+    and f.path = $4
 `
 
 type GetFileParams struct {
@@ -78,19 +107,31 @@ func (q *Queries) GetFile(ctx context.Context, arg GetFileParams) (File, error) 
 }
 
 const getFiles = `-- name: GetFiles :many
-WITH latest_run AS (
-  SELECT r.provider, r.owner, r.repo_name, ir.id, ir.repository_id, ir.branch, ir.commit_sha, ir.status, ir.started_at, ir.files_processed_count, ir.completed_at, ir.error_message,
-         ROW_NUMBER() OVER (ORDER BY ir.started_at DESC) as rn
-  FROM ingestion_runs ir
-  JOIN repositories r ON ir.repository_id = r.id
-  WHERE r.provider = $1 
-    AND r.owner = $2 
-    AND r.repo_name = $3
+with latest_run as (
+    select
+        r.provider,
+        r.owner,
+        r.repo_name,
+        ir.id, ir.repository_id, ir.branch, ir.commit_sha, ir.status, ir.started_at, ir.files_processed_count, ir.completed_at, ir.error_message,
+        row_number() over (
+            order by ir.started_at desc
+        ) as rn
+    from ingestion_runs ir
+    join repositories r on ir.repository_id = r.id
+    where
+        r.provider = $1
+        and r.owner = $2
+        and r.repo_name = $3
 )
-SELECT lr.provider, lr.owner, lr.repo_name, f.id, f.ingestion_run_id, f.created_at, f.path, f.basename, f.stem, f.extension, f.content, f.size_bytes, f.hash
-FROM files f
-JOIN latest_run lr ON f.ingestion_run_id = lr.id
-WHERE lr.rn = 1
+
+select
+    lr.provider,
+    lr.owner,
+    lr.repo_name,
+    f.id, f.ingestion_run_id, f.created_at, f.path, f.basename, f.stem, f.extension, f.content, f.size_bytes, f.hash
+from files f
+join latest_run lr on f.ingestion_run_id = lr.id
+where lr.rn = 1
 `
 
 type GetFilesParams struct {

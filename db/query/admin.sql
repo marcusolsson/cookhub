@@ -30,32 +30,65 @@ update ingestion_runs set
 where id = $3;
 
 -- name: GetFile :one
-WITH latest_run AS (
-  SELECT ir.*,
-         ROW_NUMBER() OVER (ORDER BY ir.started_at DESC) as rn
-  FROM ingestion_runs ir
-  JOIN repositories r ON ir.repository_id = r.id
-  WHERE r.provider = $1 
-    AND r.owner = $2 
-    AND r.repo_name = $3
+with latest_run as (
+    select
+        ir.*,
+        row_number() over (
+            order by ir.started_at desc
+        ) as rn
+    from ingestion_runs ir
+    join repositories r on ir.repository_id = r.id
+    where
+        r.provider = $1
+        and r.owner = $2
+        and r.repo_name = $3
 )
-SELECT f.*
-FROM files f
-JOIN latest_run lr ON f.ingestion_run_id = lr.id
-WHERE lr.rn = 1
-  AND f.path = $4;
+
+select f.*
+from files f
+join latest_run lr on f.ingestion_run_id = lr.id
+where
+    lr.rn = 1
+    and f.path = $4;
 
 -- name: GetFiles :many
-WITH latest_run AS (
-  SELECT r.provider, r.owner, r.repo_name, ir.*,
-         ROW_NUMBER() OVER (ORDER BY ir.started_at DESC) as rn
-  FROM ingestion_runs ir
-  JOIN repositories r ON ir.repository_id = r.id
-  WHERE r.provider = $1 
-    AND r.owner = $2 
-    AND r.repo_name = $3
+with latest_run as (
+    select
+        r.provider,
+        r.owner,
+        r.repo_name,
+        ir.*,
+        row_number() over (
+            order by ir.started_at desc
+        ) as rn
+    from ingestion_runs ir
+    join repositories r on ir.repository_id = r.id
+    where
+        r.provider = $1
+        and r.owner = $2
+        and r.repo_name = $3
 )
-SELECT lr.provider, lr.owner, lr.repo_name, f.*
-FROM files f
-JOIN latest_run lr ON f.ingestion_run_id = lr.id
-WHERE lr.rn = 1;
+
+select
+    lr.provider,
+    lr.owner,
+    lr.repo_name,
+    f.*
+from files f
+join latest_run lr on f.ingestion_run_id = lr.id
+where lr.rn = 1;
+
+-- name: GetCommitShaByRepo :one
+with latest_run as (
+    select
+        ir.commit_sha,
+        row_number() over (
+            order by ir.started_at desc
+        ) as rn
+    from ingestion_runs ir
+    join repositories r on ir.repository_id = r.id
+    where r.id = $1
+)
+
+select commit_sha from latest_run
+where rn = 1;
