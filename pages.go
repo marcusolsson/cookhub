@@ -29,9 +29,8 @@ func (s *Server) pageShowRecipe(w http.ResponseWriter, req *http.Request) error 
 		return err
 	}
 	model := &views.RecipeViewModel{
-		Recipe:    recipe,
-		RawRecipe: file.Content,
-		File:      file,
+		Recipe: recipe,
+		File:   file,
 	}
 
 	page := views.RecipePage(model)

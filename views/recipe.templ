@@ -10,9 +10,8 @@ import (
 )
 
 type RecipeViewModel struct {
-	Recipe    *cooklang.RecipeV2
-	RawRecipe string
-	File      db.GetFileRow
+	Recipe *cooklang.RecipeV2
+	File   db.GetFileRow
 }
 
 func fileID(file db.GetFileRow) string {
@@ -49,7 +48,7 @@ templ RecipePage(pd *RecipeViewModel) {
 				<details>
 					<summary>View the raw recipe</summary>
 					<pre>
-						<code>{ pd.RawRecipe }</code>
+						<code>{ pd.File.Content }</code>
 					</pre>
 				</details>
 			</main>
