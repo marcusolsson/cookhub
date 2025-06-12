@@ -96,7 +96,7 @@ func (s *Server) apiImportRepos(w http.ResponseWriter, req *http.Request) {
 
 				if sha == last_sha {
 					ctxlog.Info("Skipping up-to-date repository")
-					return
+					continue
 				}
 
 				ctxlog.Info("Ingesting files")
