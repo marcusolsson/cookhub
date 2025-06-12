@@ -71,7 +71,7 @@ templ recipePageHeader(meta *utils.RecipeMetadata, file db.GetFileRow) {
 			}
 		}
 		<section class="recipe-source">
-			@Author(file.Owner, fmt.Sprintf("https://%s/%s", file.Provider, file.Owner))
+			@Author(file)
 			@ButtonGroup() {
 				@IconButton("github", string(canonicalFileURL(file)))
 				if source := meta.Source(); source != nil {

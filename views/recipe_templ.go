@@ -231,7 +231,7 @@ func recipePageHeader(meta *utils.RecipeMetadata, file db.GetFileRow) templ.Comp
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = Author(file.Owner, fmt.Sprintf("https://%s/%s", file.Provider, file.Owner)).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Author(file).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -1,5 +1,10 @@
 package views
 
+import (
+	"fmt"
+	db "github.com/marcusolsson/cookhub/db/sqlc"
+)
+
 templ Tag(tag string) {
 	<span class="tag">{ tag }</span>
 }
@@ -20,9 +25,11 @@ templ Icon(name string) {
 	<i data-lucide={ name }></i>
 }
 
-templ Author(authorName, authorURL string) {
+templ Author(file db.GetFileRow) {
 	<div class="author">
-		@Link(authorName, authorURL)
+		@Link(file.Owner, fmt.Sprintf("https://%s/%s", file.Provider, file.Owner))
+		{{ u := fmt.Sprintf("/%s/%s/%s", file.Provider, file.Owner, file.RepoName) }}
+		<a class="text-small" href={ templ.URL(u) }>View all recipes in cookbook</a>
 	</div>
 }
 
