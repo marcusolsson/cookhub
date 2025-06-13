@@ -133,6 +133,7 @@ select
     lr.provider,
     lr.owner,
     lr.repo_name,
+    lr.commit_sha,
     f.id, f.ingestion_run_id, f.created_at, f.path, f.basename, f.stem, f.extension, f.content, f.size_bytes, f.hash
 from files f
 join latest_run lr on f.ingestion_run_id = lr.id
@@ -152,6 +153,7 @@ type GetFileRow struct {
 	Provider       string
 	Owner          string
 	RepoName       string
+	CommitSha      string
 	ID             string
 	IngestionRunID string
 	CreatedAt      pgtype.Timestamptz
@@ -176,6 +178,7 @@ func (q *Queries) GetFile(ctx context.Context, arg GetFileParams) (GetFileRow, e
 		&i.Provider,
 		&i.Owner,
 		&i.RepoName,
+		&i.CommitSha,
 		&i.ID,
 		&i.IngestionRunID,
 		&i.CreatedAt,

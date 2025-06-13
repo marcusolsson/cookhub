@@ -58,6 +58,7 @@ select
     lr.provider,
     lr.owner,
     lr.repo_name,
+    lr.commit_sha,
     f.*
 from files f
 join latest_run lr on f.ingestion_run_id = lr.id

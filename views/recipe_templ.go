@@ -27,7 +27,7 @@ func fileID(file db.GetFileRow) string {
 }
 
 func canonicalFileURL(file db.GetFileRow) string {
-	return "https://" + fileID(file)
+	return "https://" + strings.Join([]string{file.Provider, file.Owner, file.RepoName, "blob", file.CommitSha, file.Path}, "/")
 }
 
 func relativeFileURL(file db.GetFileRow) string {
