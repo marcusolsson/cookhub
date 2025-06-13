@@ -246,7 +246,6 @@ details {
   margin-top: 1rem;
 
   summary {
-    background-color: rgb(13, 17, 23);
     color: rgb(68, 147, 248);
     border-radius: var(--border-radius-md);
     border: 1px solid var(--border-color);
@@ -255,7 +254,7 @@ details {
     margin-bottom: 0.5rem;
 
     &:hover {
-      background-color: rgb(21, 27, 35);
+      background-color: var(--surface0-color);
     }
   }
 }
