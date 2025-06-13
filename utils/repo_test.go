@@ -10,7 +10,7 @@ func TestRepoRef_URL(t *testing.T) {
 	repo := RepoRef{
 		Provider: "github.com",
 		Owner:    "marcusolsson",
-		Name:     "recipes",
+		RepoName: "recipes",
 	}
 
 	require.Equal(t, "https://github.com/marcusolsson/recipes", repo.URL().String())
@@ -21,7 +21,7 @@ func TestRepoFileRef_URL(t *testing.T) {
 	repo := RepoRef{
 		Provider: "github.com",
 		Owner:    "marcusolsson",
-		Name:     "recipes",
+		RepoName: "recipes",
 	}
 
 	fileRef := RepoFileRef{

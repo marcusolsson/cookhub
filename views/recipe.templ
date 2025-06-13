@@ -38,7 +38,6 @@ templ RecipePage(pd *RecipeViewModel) {
 			<link rel="canonical" href={ templ.URL(canonicalFileURL(pd.File)) }/>
 		</head>
 		<body>
-			@navigation()
 			<main class="container">
 				@recipePageHeader(meta, pd.File)
 				@Columns() {

@@ -59,6 +59,35 @@ func (q *Queries) CreateIngestionRun(ctx context.Context, arg CreateIngestionRun
 	return id, err
 }
 
+const findRepositoryByName = `-- name: FindRepositoryByName :one
+select id, url, provider, owner, repo_name, slug, ref from repositories
+where
+    provider = $1
+    and owner = $2
+    and repo_name = $3
+`
+
+type FindRepositoryByNameParams struct {
+	Provider string
+	Owner    string
+	RepoName string
+}
+
+func (q *Queries) FindRepositoryByName(ctx context.Context, arg FindRepositoryByNameParams) (Repository, error) {
+	row := q.db.QueryRow(ctx, findRepositoryByName, arg.Provider, arg.Owner, arg.RepoName)
+	var i Repository
+	err := row.Scan(
+		&i.ID,
+		&i.Url,
+		&i.Provider,
+		&i.Owner,
+		&i.RepoName,
+		&i.Slug,
+		&i.Ref,
+	)
+	return i, err
+}
+
 const getCommitShaByRepo = `-- name: GetCommitShaByRepo :one
 with latest_run as (
     select
@@ -162,31 +191,23 @@ func (q *Queries) GetFile(ctx context.Context, arg GetFileParams) (GetFileRow, e
 }
 
 const getFiles = `-- name: GetFiles :many
-with latest_run as (
-    select
-        r.provider,
-        r.owner,
-        r.repo_name,
-        ir.id, ir.repo_id, ir.repo_ref, ir.commit_sha, ir.status, ir.started_at, ir.files_processed_count, ir.completed_at, ir.error_message,
-        row_number() over (
-            order by ir.started_at desc
-        ) as rn
-    from ingestion_runs ir
-    join repositories r on ir.repo_id = r.id
-    where
-        r.provider = $1
-        and r.owner = $2
-        and r.repo_name = $3
-)
-
 select
-    lr.provider,
-    lr.owner,
-    lr.repo_name,
+    r.provider,
+    r.owner,
+    r.repo_name,
     f.id, f.ingestion_run_id, f.created_at, f.path, f.basename, f.stem, f.extension, f.content, f.size_bytes, f.hash
 from files f
-join latest_run lr on f.ingestion_run_id = lr.id
-where lr.rn = 1
+join ingestion_runs ir on f.ingestion_run_id = ir.id
+join repositories r on ir.repo_id = r.id
+where
+    r.provider = $1
+    and r.owner = $2
+    and r.repo_name = $3
+    and ir.started_at = (
+        select max(started_at)
+        from ingestion_runs
+        where repo_id = r.id
+    )
 `
 
 type GetFilesParams struct {

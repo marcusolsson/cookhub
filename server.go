@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
 	"github.com/marcusolsson/cookhub/github"
@@ -26,8 +27,10 @@ func (srv *Server) Router() chi.Router {
 
 	h := errorHandler(srv.logger)
 
-	r.Get("/{provider}/{owner}/{name}/*", h(srv.recipePage))
-	r.Get("/{provider}/{owner}/{name}", h(srv.cookbookPage))
+	r.Use(middleware.StripSlashes)
+
+	r.Get("/{provider}/{owner}/{repo_name}/*", h(srv.recipePage))
+	r.Get("/{provider}/{owner}/{repo_name}", h(srv.cookbookPage))
 
 	// API routes handle admin operations.
 	r.Route("/api", func(r chi.Router) {
@@ -37,6 +40,9 @@ func (srv *Server) Router() chi.Router {
 
 	// Serve all files in the "/static" directory.
 	r.Handle("/static/*", http.StripPrefix("/static/", StaticFileServer))
+	r.Handle("/", http.RedirectHandler("/github.com/marcusolsson/recipes", http.StatusFound))
+
+	r.NotFound(h(srv.notFoundPage))
 
 	return r
 }

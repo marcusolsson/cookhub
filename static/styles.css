@@ -56,6 +56,7 @@ body {
 
 .container {
   margin: 0 auto;
+  margin-top: 5rem;
   max-width: 920px;
 
   img {
@@ -292,7 +293,6 @@ details {
       padding: 0;
     }
   }
-  margin-bottom: 5rem;
 }
 
 .ingredient-list-item {

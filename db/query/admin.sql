@@ -66,31 +66,23 @@ where
     and f.path = $4;
 
 -- name: GetFiles :many
-with latest_run as (
-    select
-        r.provider,
-        r.owner,
-        r.repo_name,
-        ir.*,
-        row_number() over (
-            order by ir.started_at desc
-        ) as rn
-    from ingestion_runs ir
-    join repositories r on ir.repo_id = r.id
-    where
-        r.provider = $1
-        and r.owner = $2
-        and r.repo_name = $3
-)
-
 select
-    lr.provider,
-    lr.owner,
-    lr.repo_name,
+    r.provider,
+    r.owner,
+    r.repo_name,
     f.*
 from files f
-join latest_run lr on f.ingestion_run_id = lr.id
-where lr.rn = 1;
+join ingestion_runs ir on f.ingestion_run_id = ir.id
+join repositories r on ir.repo_id = r.id
+where
+    r.provider = $1
+    and r.owner = $2
+    and r.repo_name = $3
+    and ir.started_at = (
+        select max(started_at)
+        from ingestion_runs
+        where repo_id = r.id
+    );
 
 -- name: GetCommitShaByRepo :one
 with latest_run as (
@@ -106,3 +98,10 @@ with latest_run as (
 
 select commit_sha from latest_run
 where rn = 1;
+
+-- name: FindRepositoryByName :one
+select * from repositories
+where
+    provider = $1
+    and owner = $2
+    and repo_name = $3;

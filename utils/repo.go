@@ -5,23 +5,23 @@ import "net/url"
 type RepoRef struct {
 	Provider string
 	Owner    string
-	Name     string
+	RepoName string
 }
 
 func (r RepoRef) URL() *url.URL {
 	return &url.URL{
 		Scheme: "https",
 		Host:   r.Provider,
-		Path:   "/" + r.Owner + "/" + r.Name,
+		Path:   "/" + r.Owner + "/" + r.RepoName,
 	}
 }
 
 func (r RepoRef) ID() string {
-	return r.Provider + "/" + r.Owner + "/" + r.Name
+	return r.Provider + "/" + r.Owner + "/" + r.RepoName
 }
 
 func (r RepoRef) Slug() string {
-	return r.Owner + "/" + r.Name
+	return r.Owner + "/" + r.RepoName
 }
 
 type RepoFileRef struct {

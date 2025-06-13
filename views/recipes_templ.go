@@ -11,10 +11,9 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"fmt"
 	db "github.com/marcusolsson/cookhub/db/sqlc"
-	"github.com/marcusolsson/cookhub/utils"
 )
 
-func AllRecipesPage(repoRef utils.RepoRef, files []db.GetFilesRow) templ.Component {
+func AllRecipesPage(repo db.Repository, files []db.GetFilesRow) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -52,9 +51,9 @@ func AllRecipesPage(repoRef utils.RepoRef, files []db.GetFilesRow) templ.Compone
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(repoRef.Owner)
+			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(repo.Owner)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/recipes.templ`, Line: 11, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/recipes.templ`, Line: 10, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -74,7 +73,7 @@ func AllRecipesPage(repoRef utils.RepoRef, files []db.GetFilesRow) templ.Compone
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var4 templ.SafeURL = templ.URL(repoRef.URL().String())
+				var templ_7745c5c3_Var4 templ.SafeURL = templ.URL("https://" + repo.Url)
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var4)))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -84,9 +83,9 @@ func AllRecipesPage(repoRef utils.RepoRef, files []db.GetFilesRow) templ.Compone
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var5 string
-				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(repoRef.Slug())
+				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(repo.Slug)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/recipes.templ`, Line: 18, Col: 97}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/recipes.templ`, Line: 17, Col: 91}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -118,7 +117,7 @@ func AllRecipesPage(repoRef utils.RepoRef, files []db.GetFilesRow) templ.Compone
 					var templ_7745c5c3_Var7 string
 					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(file.Stem)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/recipes.templ`, Line: 24, Col: 46}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/recipes.templ`, Line: 23, Col: 46}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 					if templ_7745c5c3_Err != nil {
