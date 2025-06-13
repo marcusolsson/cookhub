@@ -41,7 +41,10 @@ templ RecipePage(pd *RecipeViewModel) {
 			<main class="container">
 				@recipePageHeader(meta, pd.File)
 				@Columns() {
-					@recipeIngredients(pd.Recipe, meta.Servings(), pd.File)
+					<div style="display: flex; flex-direction: column; gap: 2rem;">
+						@recipeIngredients(pd.Recipe, meta.Servings(), pd.File)
+						@recipeCookware(pd.Recipe, pd.File)
+					</div>
 					@recipeInstructions(pd.Recipe, pd.File)
 				}
 				<details>
@@ -158,6 +161,35 @@ templ cooklangIngredientListItem(val cooklang.IngredientV2, file db.GetFileRow) 
 				<span>{ fmt.Sprintf("%v ", val.Quantity) }</span>
 			default:
 				<span>{ fmt.Sprintf("%v %s ", val.Quantity, val.Units) }</span>
+		}
+	</li>
+}
+
+templ recipeCookware(recipe *cooklang.RecipeV2, file db.GetFileRow) {
+	<aside id="cookware">
+		<h2>Cookware </h2>
+		@cooklangCookwareList(recipe.Steps, file)
+	</aside>
+}
+
+templ cooklangCookwareList(steps []cooklang.StepV2, file db.GetFileRow) {
+	<ul>
+		for _, section := range steps {
+			for _, step := range section {
+				switch val := step.(type) {
+					case cooklang.CookwareV2:
+						@cooklangCookwareListItem(val, file)
+				}
+			}
+		}
+	</ul>
+}
+
+templ cooklangCookwareListItem(val cooklang.CookwareV2, file db.GetFileRow) {
+	<li class="cookware-list-item">
+		{ val.Name }
+		if val.Quantity > 1 {
+			<span>{ fmt.Sprintf("%v ", val.Quantity) }</span>
 		}
 	</li>
 }

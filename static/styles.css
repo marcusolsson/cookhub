@@ -61,7 +61,8 @@ body {
 
   img {
     max-width: 100%;
-    height: auto;
+    object-fit: cover;
+    aspect-ratio: 1.85 / 1;
     border-radius: var(--border-radius-lg);
   }
 }
@@ -176,6 +177,7 @@ ul {
   }
 }
 
+#cookware,
 #ingredients,
 #instructions {
   a {
@@ -294,6 +296,7 @@ details {
   }
 }
 
+.cookware-list-item,
 .ingredient-list-item {
   display: grid;
   grid-template-columns: 1fr auto;
