@@ -64,6 +64,7 @@ body {
     object-fit: cover;
     aspect-ratio: 1.85 / 1;
     border-radius: var(--border-radius-lg);
+    margin-bottom: 1rem;
   }
 }
 
