@@ -38,7 +38,7 @@ jobs:
         with:
           username: nologin
           password: ${{ secrets.SCW_SECRET_KEY }}
-          registry: ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}
+          registry: ${{ secrets.SCW_CONTAINER_REGISTRY }}
 
       - name: Build and push Docker image
         id: push
@@ -48,8 +48,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ secrets.CONTAINER_REGISTRY_ENDPOINT}}/cookhub:latest
-            ${{ secrets.CONTAINER_REGISTRY_ENDPOINT}}/cookhub:${{ github.sha }}
+            ${{ secrets.SCW_CONTAINER_REGISTRY}}/cookhub:latest
+            ${{ secrets.SCW_CONTAINER_REGISTRY}}/cookhub:${{ github.sha }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -68,4 +68,4 @@ jobs:
       - name: Deploy new container
         uses: scaleway/action-scw@v0
         with:
-          args: container container update ${{ secrets.SCW_CONTAINER_ID }} registry-image=${{ secrets.CONTAINER_REGISTRY_ENDPOINT}}/cookhub:${{ github.sha }}
+          args: container container update ${{ secrets.SCW_CONTAINER_ID }} registry-image=${{ secrets.SCW_CONTAINER_REGISTRY}}/cookhub:${{ github.sha }}
