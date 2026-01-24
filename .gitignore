@@ -2,3 +2,4 @@
 app
 .env.production
 .env.development
+public
