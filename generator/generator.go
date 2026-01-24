@@ -118,8 +118,8 @@ func discoverRecipes(inputDir string, baseURL string) ([]models.RecipeFile, erro
 		} else {
 			dir = dir + "/"
 		}
-		outputPath := dir + slug + ".html"
-		url := baseURL + "/" + dir + slug + ".html"
+		outputPath := dir + slug + "/index.html"
+		url := baseURL + "/" + dir + slug + "/"
 
 		recipes = append(recipes, models.RecipeFile{
 			Path:       relPath,
