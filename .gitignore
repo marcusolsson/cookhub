@@ -1,5 +1,3 @@
 .task/
 app
-.env.production
-.env.development
 public

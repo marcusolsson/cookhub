@@ -1,0 +1,8 @@
+{
+  "name": "cooklang",
+  "version": "1.0.0",
+  "description": "Cooklang recipe markup language support - parse, create, and work with .cook recipe files. Includes syntax highlighting knowledge, recipe generation, shopping list extraction, and format conversion.",
+  "author": "Claude",
+  "license": "MIT",
+  "keywords": ["cooklang", "recipes", "cooking", "markup", "food", "ingredients", "meal-planning"]
+}
