@@ -1,0 +1,240 @@
+package generator
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"io"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/aquilax/cooklang-go"
+	"github.com/marcusolsson/cookhub/models"
+	"github.com/marcusolsson/cookhub/views"
+)
+
+// Config holds the configuration for site generation
+type Config struct {
+	InputDir  string
+	OutputDir string
+	Title     string
+}
+
+// Generate creates a static site from CookLang recipe files
+func Generate(cfg Config) error {
+	// Discover all .cook files
+	recipes, err := discoverRecipes(cfg.InputDir)
+	if err != nil {
+		return fmt.Errorf("discovering recipes: %w", err)
+	}
+
+	if len(recipes) == 0 {
+		return fmt.Errorf("no .cook files found in %s", cfg.InputDir)
+	}
+
+	fmt.Printf("Found %d recipe(s)\n", len(recipes))
+
+	// Create output directory
+	if err := os.MkdirAll(cfg.OutputDir, 0755); err != nil {
+		return fmt.Errorf("creating output directory: %w", err)
+	}
+
+	// Generate individual recipe pages
+	for _, recipe := range recipes {
+		if err := generateRecipePage(cfg, recipe); err != nil {
+			return fmt.Errorf("generating recipe %s: %w", recipe.Path, err)
+		}
+		fmt.Printf("  Generated: %s\n", recipe.OutputPath)
+	}
+
+	// Generate index page
+	cookbook := models.Cookbook{
+		Title:   cfg.Title,
+		Recipes: recipes,
+	}
+	if err := generateIndexPage(cfg, cookbook); err != nil {
+		return fmt.Errorf("generating index page: %w", err)
+	}
+	fmt.Println("  Generated: index.html")
+
+	// Copy static assets
+	if err := copyStaticAssets(cfg.OutputDir); err != nil {
+		return fmt.Errorf("copying static assets: %w", err)
+	}
+	fmt.Println("  Copied: static/")
+
+	return nil
+}
+
+// discoverRecipes walks the input directory and finds all .cook files
+func discoverRecipes(inputDir string) ([]models.RecipeFile, error) {
+	var recipes []models.RecipeFile
+
+	err := filepath.WalkDir(inputDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		if filepath.Ext(path) != ".cook" {
+			return nil
+		}
+
+		// Read file content
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("reading %s: %w", path, err)
+		}
+
+		// Calculate relative path from input directory
+		relPath, err := filepath.Rel(inputDir, path)
+		if err != nil {
+			return fmt.Errorf("calculating relative path: %w", err)
+		}
+
+		// Build recipe file model
+		stem := strings.TrimSuffix(filepath.Base(path), ".cook")
+		outputPath := strings.TrimSuffix(relPath, ".cook") + ".html"
+		url := "/" + strings.TrimSuffix(relPath, ".cook") + ".html"
+
+		recipes = append(recipes, models.RecipeFile{
+			Path:       relPath,
+			Stem:       stem,
+			Content:    string(content),
+			OutputPath: outputPath,
+			URL:        url,
+		})
+
+		return nil
+	})
+
+	return recipes, err
+}
+
+// parseCooklangRecipe parses a CookLang recipe from content
+func parseCooklangRecipe(content string) (*cooklang.RecipeV2, error) {
+	parser := cooklang.NewParserV2(&cooklang.ParseV2Config{})
+	return parser.ParseString(content)
+}
+
+// generateRecipePage generates the HTML for a single recipe
+func generateRecipePage(cfg Config, recipe models.RecipeFile) error {
+	// Parse the recipe
+	parsed, err := parseCooklangRecipe(recipe.Content)
+	if err != nil {
+		return fmt.Errorf("parsing recipe: %w", err)
+	}
+
+	// Create view model
+	vm := &views.RecipeViewModel{
+		Recipe: parsed,
+		File:   recipe,
+	}
+
+	// Render to buffer
+	var buf bytes.Buffer
+	if err := views.RecipePage(vm).Render(context.Background(), &buf); err != nil {
+		return fmt.Errorf("rendering template: %w", err)
+	}
+
+	// Ensure output directory exists
+	outputPath := filepath.Join(cfg.OutputDir, recipe.OutputPath)
+	if err := os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
+		return fmt.Errorf("creating output directory: %w", err)
+	}
+
+	// Write to file
+	if err := os.WriteFile(outputPath, buf.Bytes(), 0644); err != nil {
+		return fmt.Errorf("writing file: %w", err)
+	}
+
+	return nil
+}
+
+// generateIndexPage generates the index.html listing all recipes
+func generateIndexPage(cfg Config, cookbook models.Cookbook) error {
+	var buf bytes.Buffer
+	if err := views.AllRecipesPage(cookbook).Render(context.Background(), &buf); err != nil {
+		return fmt.Errorf("rendering index template: %w", err)
+	}
+
+	outputPath := filepath.Join(cfg.OutputDir, "index.html")
+	if err := os.WriteFile(outputPath, buf.Bytes(), 0644); err != nil {
+		return fmt.Errorf("writing index file: %w", err)
+	}
+
+	return nil
+}
+
+// copyStaticAssets copies the static directory to the output
+func copyStaticAssets(outputDir string) error {
+	// Get the path to the static directory relative to this package
+	// We'll look for it in the current working directory
+	staticDir := "static"
+
+	// Check if static directory exists
+	if _, err := os.Stat(staticDir); os.IsNotExist(err) {
+		// Try relative to executable
+		execPath, err := os.Executable()
+		if err == nil {
+			staticDir = filepath.Join(filepath.Dir(execPath), "static")
+		}
+	}
+
+	if _, err := os.Stat(staticDir); os.IsNotExist(err) {
+		fmt.Println("  Warning: static directory not found, skipping asset copy")
+		return nil
+	}
+
+	destDir := filepath.Join(outputDir, "static")
+	if err := os.MkdirAll(destDir, 0755); err != nil {
+		return fmt.Errorf("creating static output directory: %w", err)
+	}
+
+	return filepath.WalkDir(staticDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		relPath, err := filepath.Rel(staticDir, path)
+		if err != nil {
+			return err
+		}
+
+		destPath := filepath.Join(destDir, relPath)
+
+		// Ensure destination directory exists
+		if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
+			return err
+		}
+
+		return copyFile(path, destPath)
+	})
+}
+
+// copyFile copies a single file
+func copyFile(src, dst string) error {
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	_, err = io.Copy(dstFile, srcFile)
+	return err
+}

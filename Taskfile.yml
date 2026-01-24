@@ -6,25 +6,22 @@ tasks:
     cmds:
       - task --list-all
 
-  serve:
-    desc: Start local web server
+  build:
+    desc: Build the CLI tool
     cmds:
-      - go build -o app .
-      - defer: rm ./app
-      - ./app
-    method: none
-    deps: [generate]
-    dotenv:
-      - .env.development
+      - go build -o cookhub ./cmd/cookhub
+    deps: [templ]
+
+  install:
+    desc: Install the CLI tool
+    cmds:
+      - go install ./cmd/cookhub
+    deps: [templ]
 
   test:
     desc: Run all tests
     cmds:
       - go test ./...
-
-  generate:
-    desc: Generate all assets
-    deps: [sqlc, templ]
 
   templ:
     desc: Build templates
@@ -35,35 +32,12 @@ tasks:
     generates:
       - ./**/*_templ.go
 
-  sqlc:
-    desc: Generate Go types from SQL queries
-    cmds:
-      - sqlc generate --file ./db/sqlc.yml
-    sources:
-      - db/query/*.sql
-    generates:
-      - db/sqlc/*.sql.go
-
   lint:
     desc: Run all linters
     cmds:
-      - sqlfluff lint --dialect postgres ./db --exclude-rules AM04 --disable-progress-bar
+      - go vet ./...
 
   format:
     desc: Run all formatters
     cmds:
       - go fmt ./...
-      - sqlfluff format --dialect postgres ./db --disable-progress-bar
-
-  migrate:
-    dotenv:
-      - .env.production
-    cmds:
-      - migrate -source file://db/migrations -database $DATABASE_URL {{.CLI_ARGS}}
-
-  psql:
-    dotenv:
-      - .env.production
-    cmds:
-      - psql $DATABASE_URL
-    method: none

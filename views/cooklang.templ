@@ -4,11 +4,11 @@ import (
 	"strings"
 
 	"github.com/aquilax/cooklang-go"
+	"github.com/marcusolsson/cookhub/models"
 	"github.com/marcusolsson/cookhub/utils"
-	db "github.com/marcusolsson/cookhub/db/sqlc"
 )
 
-templ cooklangStep(step any, file db.GetFileRow) {
+templ cooklangStep(step any, file models.RecipeFile) {
 	switch val := step.(type) {
 		case cooklang.TextV2:
 			@cooklangText(val)
@@ -29,9 +29,9 @@ templ cooklangText(val cooklang.TextV2) {
 	}
 }
 
-templ cooklangIngredient(val cooklang.IngredientV2, file db.GetFileRow) {
+templ cooklangIngredient(val cooklang.IngredientV2, file models.RecipeFile) {
 	if strings.HasPrefix(val.Name, "./") {
-		{{ u := utils.ResolveRecipe(relativeFileURL(file), val.Name+".cook") }}
+		{{ u := resolveRecipeURL(file, val.Name+".cook") }}
 		<a href={ templ.URL(u) }>
 			{ strings.TrimPrefix(val.Name, "./") }
 		</a>
@@ -42,9 +42,9 @@ templ cooklangIngredient(val cooklang.IngredientV2, file db.GetFileRow) {
 	}
 }
 
-templ cooklangIngredientText(name string, file db.GetFileRow) {
+templ cooklangIngredientText(name string, file models.RecipeFile) {
 	if strings.HasPrefix(name, "./") {
-		{{ u := utils.ResolveRecipe(relativeFileURL(file), name+".cook") }}
+		{{ u := resolveRecipeURL(file, name+".cook") }}
 		<a href={ templ.URL(u) }>
 			{ strings.TrimPrefix(name, "./") }
 		</a>

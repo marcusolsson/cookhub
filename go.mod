@@ -3,30 +3,19 @@ module github.com/marcusolsson/cookhub
 go 1.23.2
 
 require (
-	github.com/a-h/templ v0.3.865
+	github.com/a-h/templ v0.3.977
 	github.com/aquilax/cooklang-go v0.2.0
-	github.com/caarlos0/env/v11 v11.3.1
-	github.com/go-chi/chi/v5 v5.2.1
-	github.com/jackc/pgx/v5 v5.7.5
-	github.com/lmittmann/tint v1.1.1
-	github.com/mattn/go-sqlite3 v1.14.28
-	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.10.0
 )
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/puddle/v2 v2.2.2 // indirect
-	github.com/kr/text v0.2.0 // indirect
+	github.com/kr/pretty v0.3.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
-	github.com/spf13/cobra v1.9.1 // indirect
-	github.com/spf13/pflag v1.0.6 // indirect
-	golang.org/x/crypto v0.37.0 // indirect
-	golang.org/x/sync v0.13.0 // indirect
-	golang.org/x/text v0.24.0 // indirect
+	github.com/spf13/pflag v1.0.9 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

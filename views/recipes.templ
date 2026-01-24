@@ -1,26 +1,24 @@
 package views
 
 import (
-	"fmt"
-	db "github.com/marcusolsson/cookhub/db/sqlc"
+	"github.com/marcusolsson/cookhub/models"
 )
 
-templ AllRecipesPage(repo db.Repository, files []db.GetFilesRow) {
+templ AllRecipesPage(cookbook models.Cookbook) {
 	@page() {
-		<h1>Recipes by { repo.Owner }</h1>
-		if len(files) == 0 {
+		<h1>{ cookbook.Title }</h1>
+		if len(cookbook.Recipes) == 0 {
 			<p class="description">
-				This cookbook is empty.
+				No recipes found.
 			</p>
 		} else {
 			<p class="description">
-				This page lists all recipes in <a href={ templ.URL("https://" + repo.Url) }>{ repo.Slug }</a>.
+				Browse all { len(cookbook.Recipes) } recipes in this cookbook.
 			</p>
 			<section class="recipe-list">
-				for _, file := range files {
+				for _, file := range cookbook.Recipes {
 					<article class="recipe-card">
-						{{ u := fmt.Sprintf("/%s/%s/%s/%s", file.Provider, file.Owner, file.RepoName, file.Path) }}
-						<h2><a href={ templ.URL(u) }>{ file.Stem }</a></h2>
+						<h2><a href={ templ.URL(file.URL) }>{ file.Stem }</a></h2>
 					</article>
 				}
 			</section>
