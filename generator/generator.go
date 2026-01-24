@@ -11,8 +11,6 @@ import (
 	"strings"
 
 	"github.com/aquilax/cooklang-go"
-	"github.com/marcusolsson/cookhub/models"
-	"github.com/marcusolsson/cookhub/utils"
 	"github.com/marcusolsson/cookhub/views"
 )
 
@@ -61,7 +59,7 @@ func Generate(cfg Config) error {
 	}
 
 	// Generate index page
-	cookbook := models.Cookbook{
+	cookbook := views.Cookbook{
 		Title:   cfg.Title,
 		BaseURL: baseURL,
 		Recipes: recipes,
@@ -81,8 +79,8 @@ func Generate(cfg Config) error {
 }
 
 // discoverRecipes walks the input directory and finds all .cook files
-func discoverRecipes(inputDir string, baseURL string) ([]models.RecipeFile, error) {
-	var recipes []models.RecipeFile
+func discoverRecipes(inputDir string, baseURL string) ([]views.RecipeFile, error) {
+	var recipes []views.RecipeFile
 
 	err := filepath.WalkDir(inputDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -111,7 +109,7 @@ func discoverRecipes(inputDir string, baseURL string) ([]models.RecipeFile, erro
 
 		// Build recipe file model
 		stem := strings.TrimSuffix(filepath.Base(path), ".cook")
-		slug := utils.Slugify(stem)
+		slug := views.Slugify(stem)
 		dir := filepath.Dir(relPath)
 		if dir == "." {
 			dir = ""
@@ -121,7 +119,7 @@ func discoverRecipes(inputDir string, baseURL string) ([]models.RecipeFile, erro
 		outputPath := dir + slug + "/index.html"
 		url := baseURL + "/" + dir + slug + "/"
 
-		recipes = append(recipes, models.RecipeFile{
+		recipes = append(recipes, views.RecipeFile{
 			Path:       relPath,
 			Stem:       stem,
 			Content:    string(content),
@@ -142,7 +140,7 @@ func parseCooklangRecipe(content string) (*cooklang.RecipeV2, error) {
 }
 
 // generateRecipePage generates the HTML for a single recipe
-func generateRecipePage(cfg Config, recipe models.RecipeFile, baseURL string) error {
+func generateRecipePage(cfg Config, recipe views.RecipeFile, baseURL string) error {
 	// Parse the recipe
 	parsed, err := parseCooklangRecipe(recipe.Content)
 	if err != nil {
@@ -177,7 +175,7 @@ func generateRecipePage(cfg Config, recipe models.RecipeFile, baseURL string) er
 }
 
 // generateIndexPage generates the index.html listing all recipes
-func generateIndexPage(cfg Config, cookbook models.Cookbook) error {
+func generateIndexPage(cfg Config, cookbook views.Cookbook) error {
 	var buf bytes.Buffer
 	if err := views.AllRecipesPage(cookbook).Render(context.Background(), &buf); err != nil {
 		return fmt.Errorf("rendering index template: %w", err)

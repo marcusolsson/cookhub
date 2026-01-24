@@ -6,21 +6,15 @@ import (
 	"strings"
 
 	"github.com/aquilax/cooklang-go"
-	"github.com/marcusolsson/cookhub/models"
-	"github.com/marcusolsson/cookhub/utils"
 )
 
 type RecipeViewModel struct {
 	Recipe  *cooklang.RecipeV2
-	File    models.RecipeFile
+	File    RecipeFile
 	BaseURL string
 }
 
-func relativeFileURL(file models.RecipeFile) string {
-	return file.URL
-}
-
-func resolveRecipeURL(file models.RecipeFile, relPath string) string {
+func resolveRecipeURL(file RecipeFile, relPath string) string {
 	// Remove .cook extension from relPath if present, add .html
 	relPath = strings.TrimSuffix(relPath, ".cook") + ".html"
 	// Resolve relative to current file's directory
@@ -29,38 +23,26 @@ func resolveRecipeURL(file models.RecipeFile, relPath string) string {
 }
 
 templ RecipePage(pd *RecipeViewModel) {
-	{{ meta := utils.ParseCanonicalMetadata(pd.Recipe) }}
-	<!DOCTYPE html>
-	<html>
-		<head>
-			<meta charset="UTF-8"/>
-			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-			<title>{ meta.Title(pd.File.Path) } - CookHub</title>
-			<link rel="stylesheet" href={ pd.BaseURL + "/static/styles.css" }/>
-		</head>
-		<body>
-			<main class="container">
-				@recipePageHeader(meta, pd.File, pd.BaseURL)
-				@Columns() {
-					<div style="display: flex; flex-direction: column; gap: 2rem;">
-						@recipeIngredients(pd.Recipe, meta.Servings(), pd.File)
-						@recipeCookware(pd.Recipe, pd.File)
-					</div>
-					@recipeInstructions(pd.Recipe, pd.File)
-				}
-				<details>
-					<summary>View the raw recipe</summary>
-					<pre>
-						<code>{ pd.File.Content }</code>
-					</pre>
-				</details>
-			</main>
-			@lucideIcons()
-		</body>
-	</html>
+	{{ meta := ParseCanonicalMetadata(pd.Recipe) }}
+	@page(meta.Title(pd.File.Path) + " - CookHub", pd.BaseURL) {
+		@recipePageHeader(meta, pd.File, pd.BaseURL)
+		@Columns() {
+			<div style="display: flex; flex-direction: column; gap: 2rem;">
+				@recipeIngredients(pd.Recipe, meta.Servings(), pd.File)
+				@recipeCookware(pd.Recipe, pd.File)
+			</div>
+			@recipeInstructions(pd.Recipe, pd.File)
+		}
+		<details>
+			<summary>View the raw recipe</summary>
+			<pre>
+				<code>{ pd.File.Content }</code>
+			</pre>
+		</details>
+	}
 }
 
-templ recipePageHeader(meta *utils.RecipeMetadata, file models.RecipeFile, baseURL string) {
+templ recipePageHeader(meta *RecipeMetadata, file RecipeFile, baseURL string) {
 	<header class="recipe-header">
 		if u := meta.ImageURL(); u != "" {
 			@Image(u)
@@ -109,7 +91,7 @@ templ recipePageHeader(meta *utils.RecipeMetadata, file models.RecipeFile, baseU
 	</header>
 }
 
-templ recipeInstructions(recipe *cooklang.RecipeV2, file models.RecipeFile) {
+templ recipeInstructions(recipe *cooklang.RecipeV2, file RecipeFile) {
 	<section id="instructions">
 		<h2>Instructions</h2>
 		for _, step := range recipe.Steps {
@@ -120,7 +102,7 @@ templ recipeInstructions(recipe *cooklang.RecipeV2, file models.RecipeFile) {
 	</section>
 }
 
-templ recipeIngredients(recipe *cooklang.RecipeV2, servings float64, file models.RecipeFile) {
+templ recipeIngredients(recipe *cooklang.RecipeV2, servings float64, file RecipeFile) {
 	<aside id="ingredients">
 		<h2>
 			Ingredients
@@ -138,7 +120,7 @@ templ servingsLabel(servings float64) {
 	</div>
 }
 
-templ cooklangIngredientList(steps []cooklang.StepV2, file models.RecipeFile) {
+templ cooklangIngredientList(steps []cooklang.StepV2, file RecipeFile) {
 	<ul>
 		for _, section := range steps {
 			for _, step := range section {
@@ -151,7 +133,7 @@ templ cooklangIngredientList(steps []cooklang.StepV2, file models.RecipeFile) {
 	</ul>
 }
 
-templ cooklangIngredientListItem(val cooklang.IngredientV2, file models.RecipeFile) {
+templ cooklangIngredientListItem(val cooklang.IngredientV2, file RecipeFile) {
 	<li class="ingredient-list-item">
 		@cooklangIngredientText(val.Name, file)
 		switch  {
@@ -165,14 +147,14 @@ templ cooklangIngredientListItem(val cooklang.IngredientV2, file models.RecipeFi
 	</li>
 }
 
-templ recipeCookware(recipe *cooklang.RecipeV2, file models.RecipeFile) {
+templ recipeCookware(recipe *cooklang.RecipeV2, file RecipeFile) {
 	<aside id="cookware">
 		<h2>Cookware </h2>
 		@cooklangCookwareList(recipe.Steps, file)
 	</aside>
 }
 
-templ cooklangCookwareList(steps []cooklang.StepV2, file models.RecipeFile) {
+templ cooklangCookwareList(steps []cooklang.StepV2, file RecipeFile) {
 	<ul>
 		for _, section := range steps {
 			for _, step := range section {
@@ -185,7 +167,7 @@ templ cooklangCookwareList(steps []cooklang.StepV2, file models.RecipeFile) {
 	</ul>
 }
 
-templ cooklangCookwareListItem(val cooklang.CookwareV2, file models.RecipeFile) {
+templ cooklangCookwareListItem(val cooklang.CookwareV2, file RecipeFile) {
 	<li class="cookware-list-item">
 		{ val.Name }
 		if val.Quantity > 1 {

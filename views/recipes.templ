@@ -1,11 +1,7 @@
 package views
 
-import (
-	"github.com/marcusolsson/cookhub/models"
-)
-
-templ AllRecipesPage(cookbook models.Cookbook) {
-	@page(cookbook.BaseURL) {
+templ AllRecipesPage(cookbook Cookbook) {
+	@page(cookbook.Title, cookbook.BaseURL) {
 		<h1>{ cookbook.Title }</h1>
 		if len(cookbook.Recipes) == 0 {
 			<p class="description">

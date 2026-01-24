@@ -1,12 +1,12 @@
 package views
 
-templ page(baseURL string) {
+templ page(title, baseURL string) {
 	<!DOCTYPE html>
 	<html>
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-			<title>Cooklang Recipes</title>
+			<title>{ title }</title>
 			<link rel="stylesheet" href={ baseURL + "/static/styles.css" }/>
 		</head>
 		<body>
@@ -24,26 +24,4 @@ templ page(baseURL string) {
             </script>
 		</body>
 	</html>
-}
-
-templ lucideIcons() {
-	<script src="https://unpkg.com/lucide@latest"></script>
-	<script>
-        lucide.createIcons({ 
-            attrs: { 
-                class: ['icon'], 
-                'stroke-width': 2 
-            } 
-        });
-    </script>
-}
-
-templ navigation() {
-	<header id="site-header">
-		<nav>
-			<ul>
-				<li><a href="/cookbooks">Cookbooks</a></li>
-			</ul>
-		</nav>
-	</header>
 }

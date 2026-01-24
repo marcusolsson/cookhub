@@ -4,11 +4,9 @@ import (
 	"strings"
 
 	"github.com/aquilax/cooklang-go"
-	"github.com/marcusolsson/cookhub/models"
-	"github.com/marcusolsson/cookhub/utils"
 )
 
-templ cooklangStep(step any, file models.RecipeFile) {
+templ cooklangStep(step any, file RecipeFile) {
 	switch val := step.(type) {
 		case cooklang.TextV2:
 			@cooklangText(val)
@@ -29,20 +27,20 @@ templ cooklangText(val cooklang.TextV2) {
 	}
 }
 
-templ cooklangIngredient(val cooklang.IngredientV2, file models.RecipeFile) {
+templ cooklangIngredient(val cooklang.IngredientV2, file RecipeFile) {
 	if strings.HasPrefix(val.Name, "./") {
 		{{ u := resolveRecipeURL(file, val.Name+".cook") }}
 		<a href={ templ.URL(u) }>
 			{ strings.TrimPrefix(val.Name, "./") }
 		</a>
 	} else {
-		<dfn title={ utils.IngredientAsString(val) }>
+		<dfn title={ IngredientAsString(val) }>
 			{ val.Name }
 		</dfn>
 	}
 }
 
-templ cooklangIngredientText(name string, file models.RecipeFile) {
+templ cooklangIngredientText(name string, file RecipeFile) {
 	if strings.HasPrefix(name, "./") {
 		{{ u := resolveRecipeURL(file, name+".cook") }}
 		<a href={ templ.URL(u) }>
@@ -58,8 +56,8 @@ templ cooklangCookware(cookware cooklang.CookwareV2) {
 }
 
 templ cooklangTimer(timer cooklang.TimerV2) {
-	{{ d := utils.TimerAsDuration(timer) }}
-	<time datetime={ utils.DurationToISO8601(d) }>
+	{{ d := TimerAsDuration(timer) }}
+	<time datetime={ DurationToISO8601(d) }>
 		{ timer.Quantity } { timer.Unit }
 	</time>
 }

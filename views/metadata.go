@@ -1,4 +1,4 @@
-package utils
+package views
 
 import (
 	"cmp"
@@ -75,14 +75,6 @@ func (rm *RecipeMetadata) Course() string {
 
 func (rm *RecipeMetadata) Category() string {
 	return rm.getStringProperty("category")
-}
-
-func (rm *RecipeMetadata) Difficulty() string {
-	return rm.getStringProperty("difficulty")
-}
-
-func (rm *RecipeMetadata) Diet() string {
-	return rm.getStringProperty("diet")
 }
 
 func (rm *RecipeMetadata) Source() *url.URL {
@@ -209,25 +201,6 @@ func DurationToISO8601(d time.Duration) string {
 	}
 
 	return result.String()
-}
-
-func ResolveRecipe(base, relative string) string {
-	// Parse the base URL
-	baseURL, err := url.Parse(base)
-	if err != nil {
-		return ""
-	}
-
-	// Parse the relative URL
-	relURL, err := url.Parse(relative)
-	if err != nil {
-		return ""
-	}
-
-	// Use the built-in ResolveReference method
-	resolved := baseURL.ResolveReference(relURL)
-
-	return resolved.String()
 }
 
 // Slugify converts a string to a URL-friendly slug.

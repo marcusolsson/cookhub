@@ -4,40 +4,55 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build Commands
 
-This project uses [Task](https://taskfile.dev/) for build automation:
+- `go build ./cmd/cookhub` - Build the CLI
+- `go test ./...` - Run all tests
+- `go run github.com/a-h/templ/cmd/templ@latest generate` - Generate Go code from Templ templates
 
-- `task serve` - Build and run local web server (uses .env.development)
-- `task test` - Run all tests (`go test ./...`)
-- `task generate` - Generate all code (runs sqlc and templ)
-- `task templ` - Generate Templ templates only
-- `task sqlc` - Generate Go types from SQL queries
-- `task lint` - Run sqlfluff linter on SQL files
-- `task format` - Format Go code and SQL files
-- `task migrate` - Run database migrations (uses .env.production)
+## Usage
+
+```bash
+cookhub generate --input <recipes-dir> --output <output-dir> [--title "Site Title"] [--base-url "/prefix"]
+```
+
+Flags:
+
+- `--input` (required): Directory containing `.cook` recipe files
+- `--output`: Output directory for generated HTML (default: "public")
+- `--title`: Site title for the index page
+- `--base-url`: Base URL path prefix for serving site from a subpath
 
 ## Architecture
 
-CookHub is a recipe aggregation platform that indexes CookLang recipes from GitHub repositories.
+CookHub is a static site generator CLI that converts CookLang (.cook) recipe files to HTML.
 
-**Tech Stack:** Go 1.23.2, Chi (router), Templ (templates), SQLc (database), PostgreSQL, CookLang
+**Tech Stack:** Go 1.23.2, Templ (templates), CookLang parser, Cobra (CLI)
 
-**Request Flow:**
-1. HTTP handlers in root (`pages.go`, `api.go`) receive requests
-2. Database queries via SQLc-generated code in `db/sqlc/`
+**Generation Flow:**
+1. CLI (`cmd/cookhub/`) parses flags and invokes generator
+2. Generator (`generator/generator.go`) discovers `.cook` files recursively
 3. CookLang recipes parsed with `cooklang-go` library
 4. HTML rendered with Templ components in `views/`
+5. Static assets copied from embedded `generator/static/`
 
-**Key Directories:**
-- `db/query/` - SQL query definitions (edit these, then run `task sqlc`)
-- `db/migrations/` - Database schema migrations
-- `db/sqlc/` - Generated Go code (do not edit directly)
-- `views/` - Templ templates (`.templ` files)
-- `github/` - GitHub API client for repository sync
-- `utils/` - Utility functions for recipe parsing
+**Packages (3 total):**
 
-**Data Model:**
-- `repositories` - Tracked GitHub repos containing recipes
-- `ingestion_runs` - Import/sync session tracking
-- `files` - Recipe file content and metadata
+- `cmd/cookhub/` - CLI entry point (main.go, root.go, generate.go)
+- `generator/` - Core generation logic and embedded static assets
+- `views/` - Templ templates, data models, and metadata parsing
 
-**Import Flow:** Repos are added via `POST /api/repos`, then `POST /api/import` downloads zipballs, extracts `.cook` files, and stores them with SHA256 hashes.
+**Data Model (in views/):**
+
+- `RecipeFile` - Represents a single `.cook` file with path, content, and output URL
+- `Cookbook` - Collection of recipes with site title and base URL
+- `RecipeMetadata` - Parsed recipe metadata (title, description, times, tags, etc.)
+
+**Output Structure:**
+
+```text
+output/
+  index.html              # Recipe index page
+  recipe-name/index.html  # Individual recipe (clean URLs)
+  category/recipe/index.html
+  static/styles.css       # Stylesheet
+  static/robots.txt       # SEO file
+```
