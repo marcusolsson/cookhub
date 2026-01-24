@@ -12,6 +12,7 @@ import (
 
 	"github.com/aquilax/cooklang-go"
 	"github.com/marcusolsson/cookhub/models"
+	"github.com/marcusolsson/cookhub/utils"
 	"github.com/marcusolsson/cookhub/views"
 )
 
@@ -102,8 +103,15 @@ func discoverRecipes(inputDir string) ([]models.RecipeFile, error) {
 
 		// Build recipe file model
 		stem := strings.TrimSuffix(filepath.Base(path), ".cook")
-		outputPath := strings.TrimSuffix(relPath, ".cook") + ".html"
-		url := "/" + strings.TrimSuffix(relPath, ".cook") + ".html"
+		slug := utils.Slugify(stem)
+		dir := filepath.Dir(relPath)
+		if dir == "." {
+			dir = ""
+		} else {
+			dir = dir + "/"
+		}
+		outputPath := dir + slug + ".html"
+		url := "/" + dir + slug + ".html"
 
 		recipes = append(recipes, models.RecipeFile{
 			Path:       relPath,

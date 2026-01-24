@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/aquilax/cooklang-go"
 )
@@ -227,4 +228,28 @@ func ResolveRecipe(base, relative string) string {
 	resolved := baseURL.ResolveReference(relURL)
 
 	return resolved.String()
+}
+
+// Slugify converts a string to a URL-friendly slug.
+// "Fluffy Pancake" becomes "fluffy-pancake"
+func Slugify(s string) string {
+	var result strings.Builder
+
+	prevDash := false
+	for _, r := range strings.ToLower(s) {
+		switch {
+		case unicode.IsLetter(r) || unicode.IsDigit(r):
+			result.WriteRune(r)
+			prevDash = false
+		case unicode.IsSpace(r) || r == '-' || r == '_':
+			if !prevDash && result.Len() > 0 {
+				result.WriteRune('-')
+				prevDash = true
+			}
+		}
+	}
+
+	// Trim trailing dash
+	str := result.String()
+	return strings.TrimSuffix(str, "-")
 }
