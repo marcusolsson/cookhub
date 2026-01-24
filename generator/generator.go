@@ -3,8 +3,8 @@ package generator
 import (
 	"bytes"
 	"context"
+	"embed"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -14,6 +14,9 @@ import (
 	"github.com/marcusolsson/cookhub/models"
 	"github.com/marcusolsson/cookhub/views"
 )
+
+//go:embed static/*
+var staticFiles embed.FS
 
 // Config holds the configuration for site generation
 type Config struct {
@@ -171,32 +174,14 @@ func generateIndexPage(cfg Config, cookbook models.Cookbook) error {
 	return nil
 }
 
-// copyStaticAssets copies the static directory to the output
+// copyStaticAssets copies the embedded static files to the output directory
 func copyStaticAssets(outputDir string) error {
-	// Get the path to the static directory relative to this package
-	// We'll look for it in the current working directory
-	staticDir := "static"
-
-	// Check if static directory exists
-	if _, err := os.Stat(staticDir); os.IsNotExist(err) {
-		// Try relative to executable
-		execPath, err := os.Executable()
-		if err == nil {
-			staticDir = filepath.Join(filepath.Dir(execPath), "static")
-		}
-	}
-
-	if _, err := os.Stat(staticDir); os.IsNotExist(err) {
-		fmt.Println("  Warning: static directory not found, skipping asset copy")
-		return nil
-	}
-
 	destDir := filepath.Join(outputDir, "static")
 	if err := os.MkdirAll(destDir, 0755); err != nil {
 		return fmt.Errorf("creating static output directory: %w", err)
 	}
 
-	return filepath.WalkDir(staticDir, func(path string, d fs.DirEntry, err error) error {
+	return fs.WalkDir(staticFiles, "static", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -205,7 +190,14 @@ func copyStaticAssets(outputDir string) error {
 			return nil
 		}
 
-		relPath, err := filepath.Rel(staticDir, path)
+		// Read from embedded FS
+		content, err := staticFiles.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("reading embedded file %s: %w", path, err)
+		}
+
+		// Get relative path (remove "static/" prefix)
+		relPath, err := filepath.Rel("static", path)
 		if err != nil {
 			return err
 		}
@@ -217,24 +209,6 @@ func copyStaticAssets(outputDir string) error {
 			return err
 		}
 
-		return copyFile(path, destPath)
+		return os.WriteFile(destPath, content, 0644)
 	})
-}
-
-// copyFile copies a single file
-func copyFile(src, dst string) error {
-	srcFile, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer srcFile.Close()
-
-	dstFile, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer dstFile.Close()
-
-	_, err = io.Copy(dstFile, srcFile)
-	return err
 }
