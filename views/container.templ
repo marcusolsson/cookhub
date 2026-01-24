@@ -1,13 +1,13 @@
 package views
 
-templ page() {
+templ page(baseURL string) {
 	<!DOCTYPE html>
 	<html>
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>Cooklang Recipes</title>
-			<link rel="stylesheet" href="/static/styles.css"/>
+			<link rel="stylesheet" href={ baseURL + "/static/styles.css" }/>
 		</head>
 		<body>
 			<main class="container">
@@ -15,11 +15,11 @@ templ page() {
 			</main>
 			<script src="https://unpkg.com/lucide@latest"></script>
 			<script>
-                lucide.createIcons({ 
-                    attrs: { 
-                        class: ['icon'], 
+                lucide.createIcons({
+                    attrs: {
+                        class: ['icon'],
                         'stroke-width': 1
-                    } 
+                    }
                 });
             </script>
 		</body>

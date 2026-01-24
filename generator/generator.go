@@ -24,12 +24,19 @@ type Config struct {
 	InputDir  string
 	OutputDir string
 	Title     string
+	BaseURL   string // base URL path prefix (e.g., "/recipes")
 }
 
 // Generate creates a static site from CookLang recipe files
 func Generate(cfg Config) error {
+	// Normalize base URL: ensure it starts with / and doesn't end with /
+	baseURL := strings.TrimSuffix(cfg.BaseURL, "/")
+	if baseURL != "" && !strings.HasPrefix(baseURL, "/") {
+		baseURL = "/" + baseURL
+	}
+
 	// Discover all .cook files
-	recipes, err := discoverRecipes(cfg.InputDir)
+	recipes, err := discoverRecipes(cfg.InputDir, baseURL)
 	if err != nil {
 		return fmt.Errorf("discovering recipes: %w", err)
 	}
@@ -47,7 +54,7 @@ func Generate(cfg Config) error {
 
 	// Generate individual recipe pages
 	for _, recipe := range recipes {
-		if err := generateRecipePage(cfg, recipe); err != nil {
+		if err := generateRecipePage(cfg, recipe, baseURL); err != nil {
 			return fmt.Errorf("generating recipe %s: %w", recipe.Path, err)
 		}
 		fmt.Printf("  Generated: %s\n", recipe.OutputPath)
@@ -56,6 +63,7 @@ func Generate(cfg Config) error {
 	// Generate index page
 	cookbook := models.Cookbook{
 		Title:   cfg.Title,
+		BaseURL: baseURL,
 		Recipes: recipes,
 	}
 	if err := generateIndexPage(cfg, cookbook); err != nil {
@@ -73,7 +81,7 @@ func Generate(cfg Config) error {
 }
 
 // discoverRecipes walks the input directory and finds all .cook files
-func discoverRecipes(inputDir string) ([]models.RecipeFile, error) {
+func discoverRecipes(inputDir string, baseURL string) ([]models.RecipeFile, error) {
 	var recipes []models.RecipeFile
 
 	err := filepath.WalkDir(inputDir, func(path string, d fs.DirEntry, err error) error {
@@ -111,7 +119,7 @@ func discoverRecipes(inputDir string) ([]models.RecipeFile, error) {
 			dir = dir + "/"
 		}
 		outputPath := dir + slug + ".html"
-		url := "/" + dir + slug + ".html"
+		url := baseURL + "/" + dir + slug + ".html"
 
 		recipes = append(recipes, models.RecipeFile{
 			Path:       relPath,
@@ -134,7 +142,7 @@ func parseCooklangRecipe(content string) (*cooklang.RecipeV2, error) {
 }
 
 // generateRecipePage generates the HTML for a single recipe
-func generateRecipePage(cfg Config, recipe models.RecipeFile) error {
+func generateRecipePage(cfg Config, recipe models.RecipeFile, baseURL string) error {
 	// Parse the recipe
 	parsed, err := parseCooklangRecipe(recipe.Content)
 	if err != nil {
@@ -143,8 +151,9 @@ func generateRecipePage(cfg Config, recipe models.RecipeFile) error {
 
 	// Create view model
 	vm := &views.RecipeViewModel{
-		Recipe: parsed,
-		File:   recipe,
+		Recipe:  parsed,
+		File:    recipe,
+		BaseURL: baseURL,
 	}
 
 	// Render to buffer

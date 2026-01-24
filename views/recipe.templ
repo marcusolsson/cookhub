@@ -11,8 +11,9 @@ import (
 )
 
 type RecipeViewModel struct {
-	Recipe *cooklang.RecipeV2
-	File   models.RecipeFile
+	Recipe  *cooklang.RecipeV2
+	File    models.RecipeFile
+	BaseURL string
 }
 
 func relativeFileURL(file models.RecipeFile) string {
@@ -35,11 +36,11 @@ templ RecipePage(pd *RecipeViewModel) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ meta.Title(pd.File.Path) } - CookHub</title>
-			<link rel="stylesheet" href="/static/styles.css"/>
+			<link rel="stylesheet" href={ pd.BaseURL + "/static/styles.css" }/>
 		</head>
 		<body>
 			<main class="container">
-				@recipePageHeader(meta, pd.File)
+				@recipePageHeader(meta, pd.File, pd.BaseURL)
 				@Columns() {
 					<div style="display: flex; flex-direction: column; gap: 2rem;">
 						@recipeIngredients(pd.Recipe, meta.Servings(), pd.File)
@@ -59,7 +60,7 @@ templ RecipePage(pd *RecipeViewModel) {
 	</html>
 }
 
-templ recipePageHeader(meta *utils.RecipeMetadata, file models.RecipeFile) {
+templ recipePageHeader(meta *utils.RecipeMetadata, file models.RecipeFile, baseURL string) {
 	<header class="recipe-header">
 		if u := meta.ImageURL(); u != "" {
 			@Image(u)
@@ -77,7 +78,7 @@ templ recipePageHeader(meta *utils.RecipeMetadata, file models.RecipeFile) {
 		}
 		<section class="recipe-source">
 			@ButtonGroup() {
-				<a href="/">View all recipes</a>
+				<a href={ templ.URL(baseURL + "/") }>View all recipes</a>
 				if source := meta.Source(); source != nil {
 					@IconButton("external-link", source.String())
 				}

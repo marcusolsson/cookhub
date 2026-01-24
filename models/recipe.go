@@ -15,5 +15,6 @@ type RecipeFile struct {
 // Cookbook represents the collection of recipes being generated
 type Cookbook struct {
 	Title   string       // site title
+	BaseURL string       // base URL path prefix (e.g., "/recipes" for serving at example.com/recipes/)
 	Recipes []RecipeFile // all discovered recipes
 }

@@ -5,7 +5,7 @@ import (
 )
 
 templ AllRecipesPage(cookbook models.Cookbook) {
-	@page() {
+	@page(cookbook.BaseURL) {
 		<h1>{ cookbook.Title }</h1>
 		if len(cookbook.Recipes) == 0 {
 			<p class="description">

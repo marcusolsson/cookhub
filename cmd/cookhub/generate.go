@@ -13,6 +13,7 @@ var (
 	inputDir  string
 	outputDir string
 	title     string
+	baseURL   string
 )
 
 var generateCmd = &cobra.Command{
@@ -42,6 +43,7 @@ var generateCmd = &cobra.Command{
 			InputDir:  inputDir,
 			OutputDir: outputDir,
 			Title:     title,
+			BaseURL:   baseURL,
 		}
 
 		fmt.Printf("Generating site from %s to %s...\n", inputDir, outputDir)
@@ -59,5 +61,6 @@ func init() {
 	generateCmd.Flags().StringVarP(&inputDir, "input", "i", "", "Input directory containing .cook files (required)")
 	generateCmd.Flags().StringVarP(&outputDir, "output", "o", "public", "Output directory for generated HTML")
 	generateCmd.Flags().StringVarP(&title, "title", "t", "", "Site title (defaults to input directory name)")
+	generateCmd.Flags().StringVarP(&baseURL, "base-url", "b", "", "Base URL path prefix (e.g., /recipes for serving at example.com/recipes/)")
 	generateCmd.MarkFlagRequired("input")
 }
