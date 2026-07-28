@@ -1,0 +1,81 @@
+name: CI/CD
+
+on:
+  push:
+    branches: ["main"]
+    tags: ["v*"]
+  pull_request:
+    branches: ["main"]
+
+# Job containers do not trust the homelab Step CA, so TLS verification for
+# git.internal.marcusolsson.dev must be disabled (same pattern as the
+# monorepo workflows).
+env:
+  GIT_SSL_NO_VERIFY: 1
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install templ
+        run: go install github.com/a-h/templ/cmd/templ@$(go list -m -f '{{ .Version }}' github.com/a-h/templ)
+
+      - name: Generate templates
+        run: templ generate
+
+      - name: Build
+        run: go build -v ./cmd/cookhub
+
+      - name: Test
+        run: go test -v ./...
+
+  release:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install templ
+        run: go install github.com/a-h/templ/cmd/templ@$(go list -m -f '{{ .Version }}' github.com/a-h/templ)
+
+      - name: Generate templates
+        run: templ generate
+
+      # GoReleaser infers the release target from the git remote URL. The
+      # checkout action sets origin to the canonical clone URL of the repo,
+      # which is correct here, but make it explicit so a stale cached
+      # checkout cannot redirect the release to GitHub.
+      - name: Point git remote at Forgejo
+        run: git remote set-url origin https://git.internal.marcusolsson.dev/marcusolsson/cookhub.git
+
+      # goreleaser-action cannot be used here: Forgejo Actions
+      # auto-injects GITHUB_TOKEN, the action always forwards it to
+      # GoReleaser, and GoReleaser aborts when more than one token variable
+      # exists. Run GoReleaser directly instead, with GITHUB_TOKEN removed
+      # from the environment (GoReleaser picks the SCM type from the token
+      # variable, so only GITEA_TOKEN may be present).
+      - name: Install GoReleaser
+        run: |
+          curl -sSfL -o /tmp/goreleaser.tar.gz https://github.com/goreleaser/goreleaser/releases/download/v2.17.1/goreleaser_Linux_x86_64.tar.gz
+          mkdir -p /tmp/goreleaser-bin
+          tar -xzf /tmp/goreleaser.tar.gz -C /tmp/goreleaser-bin goreleaser
+
+      - name: Run GoReleaser
+        run: |
+          unset GITHUB_TOKEN
+          export GITEA_TOKEN="${{ secrets.RELEASE_TOKEN }}"
+          /tmp/goreleaser-bin/goreleaser release --clean

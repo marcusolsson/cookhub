@@ -1,5 +1,21 @@
 version: 2
 
+# Release to the Forgejo instance. The gitea target must be named
+# explicitly: GoReleaser otherwise infers the SCM from the repository slug
+# reported by the CI environment, which may still point at github.com
+# during the migration.
+release:
+  gitea:
+    owner: marcusolsson
+    name: cookhub
+
+gitea_urls:
+  api: https://git.internal.marcusolsson.dev/api/v1
+  download: https://git.internal.marcusolsson.dev
+  # The instance uses the homelab Step CA, which CI job containers do not
+  # trust.
+  skip_tls_verify: true
+
 before:
   hooks:
     - go mod tidy
